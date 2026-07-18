@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 DATABASE_URL = "sqlite:///./data/finansmart.db"
@@ -27,3 +27,21 @@ def init_db():
     """Crée toutes les tables si elles n'existent pas encore."""
     import app.models  # noqa : importe tous les modèles pour les enregistrer
     Base.metadata.create_all(bind=engine)
+    _appliquer_migrations_legeres()
+
+
+def _appliquer_migrations_legeres():
+    """ALTER TABLE défensif : create_all() ne modifie jamais les tables déjà existantes,
+    donc l'ajout d'une colonne à un modèle existant ne se propage pas seul à la DB."""
+    inspector = inspect(engine)
+    colonnes_attendues = {
+        "objectif_epargne": [("id_compte", "INTEGER REFERENCES compte(id)")],
+    }
+    with engine.begin() as conn:
+        for table, colonnes in colonnes_attendues.items():
+            if table not in inspector.get_table_names():
+                continue
+            existantes = {c["name"] for c in inspector.get_columns(table)}
+            for nom, ddl_type in colonnes:
+                if nom not in existantes:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {nom} {ddl_type}"))

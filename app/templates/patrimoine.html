@@ -8,28 +8,132 @@
 <!-- ==================== EN-TÊTE ==================== -->
 <div class="mb-6">
     <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Patrimoine</h1>
-    <p class="text-xs text-gray-500 mt-1">Épargne, investissements et objectifs long terme</p>
+    <p class="text-xs text-gray-500 mt-1">Épargne, objectifs et investissements long terme</p>
 </div>
 
+<!-- ==================== BANDEAU D'EFFORT D'ÉPARGNE ==================== -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        {{ icons.icon("banknotes", "18", class="mb-2 text-purple-400") }}
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Épargné ce mois</p>
+        <div class="flex items-baseline gap-2 flex-wrap">
+            <p class="valeur text-xl font-bold text-purple-400">{{ "%.0f"|format(effort_mois) }} €</p>
+            {% if delta_effort_pct != 0 %}
+            <span class="text-[11px] font-semibold flex items-center gap-0.5 {% if delta_effort_pct >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+                {% if delta_effort_pct >= 0 %}{{ icons.icon("arrow-up-right", "10") }}+{{ delta_effort_pct }}%
+                {% else %}{{ icons.icon("arrow-down-left", "10") }}{{ delta_effort_pct }}%{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        <p class="text-[11px] text-gray-600 mt-1">vs {{ "%.0f"|format(effort_mois_precedent) }} € le mois dernier</p>
+    </div>
+
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        {{ icons.icon("chart-pie", "18", class="mb-2 text-blue-400") }}
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Taux d'épargne</p>
+        <div class="flex items-baseline gap-1">
+            <p class="valeur text-xl font-bold text-blue-400">{{ "%.0f"|format(taux_epargne) }}</p>
+            <span class="text-xs text-gray-600">%</span>
+        </div>
+        <p class="text-[11px] text-gray-600 mt-1">des revenus ({{ "%.0f"|format(revenus_mois) }} € ce mois-ci)</p>
+    </div>
+
+    {{ components.kpi_mini("Total épargné", total_epargne, "€", "flag", "purple") }}
+
+</div>
+
+<!-- ==================== OBJECTIFS D'ÉPARGNE ==================== -->
+<section class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            {{ icons.icon("flag", "16", class="text-gray-500") }}
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Objectifs d'épargne</h2>
+        </div>
+        <button onclick="document.getElementById('modal-nouvel-objectif').classList.remove('hidden')"
+                title="Nouvel objectif"
+                class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-900 border border-gray-800 text-gray-400 hover:text-purple-400 hover:border-purple-600/50 transition">
+            {{ icons.icon("plus", "15") }}
+        </button>
+    </div>
+
+    {% if objectifs %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for obj in objectifs %}
+        {{ components.objectif_card(obj) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+        <p class="text-sm text-gray-400">Aucun objectif d'épargne pour l'instant.</p>
+        <p class="text-xs text-gray-600 mt-1">Cliquez sur "+" pour sanctuariser votre premier projet.</p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- ==================== TOP OBJECTIFS PROCHES DU BUT ==================== -->
+{% if top_proches %}
+<section class="mb-6">
+    {% call components.section_card("Objectifs les plus proches du but", "trophy") %}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {% for obj in top_proches %}
+        <div class="bg-gray-800/40 border border-gray-800 rounded-lg p-3">
+            <p class="text-sm text-white font-medium truncate">{{ obj.nom }}</p>
+            <div class="w-full bg-gray-800 rounded-full h-1.5 mt-2 mb-1.5">
+                <div class="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-700" style="width: {{ [obj.progression_pct, 100]|min }}%"></div>
+            </div>
+            <p class="text-xs text-gray-500">{{ obj.progression_pct }}% · reste {{ "%.0f"|format(obj.montant_cible - obj.montant_actuel) }} €</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endcall %}
+</section>
+{% endif %}
+
+<!-- ==================== ANALYSES & VISUALISATIONS ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+    {% call components.section_card("Évolution de l'épargne (6 mois)", "chart-bar") %}
+        {% if evolution %}
+        <div style="max-height: 180px;">
+            <canvas id="evolutionEpargneChart"></canvas>
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-500 py-8 text-center">Pas encore assez d'historique pour une tendance.</p>
+        {% endif %}
+    {% endcall %}
+
+    {% call components.section_card("Répartition par projet", "chart-pie") %}
+        {% if objectifs %}
+        <div style="max-height: 160px;">
+            <canvas id="repartitionEpargneChart"></canvas>
+        </div>
+        <div class="mt-4 space-y-1.5">
+            {% for obj in objectifs %}
+            <div class="flex justify-between items-center text-xs gap-2">
+                <span class="flex items-center gap-2 min-w-0 flex-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ chart_colors[loop.index0 % chart_colors|length] }};"></span>
+                    <span class="text-gray-400 truncate">{{ obj.nom }}</span>
+                </span>
+                <span class="valeur text-gray-200 font-semibold flex-shrink-0">{{ "%.0f"|format(obj.montant_actuel) }} €</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-500 py-8 text-center">Aucun objectif pour l'instant.</p>
+        {% endif %}
+    {% endcall %}
+
+</div>
+
+<!-- ==================== INVESTISSEMENTS (inchangé) ==================== -->
+<div class="flex items-center gap-2 mb-3">
+    {{ icons.icon("chart-bar", "16", class="text-gray-500") }}
+    <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Investissements</h2>
+</div>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-    <!-- ========== COLONNE GAUCHE : FORMULAIRES ========== -->
-    <div class="space-y-4">
-
-        <!-- Créer un objectif d'épargne -->
-        {% call components.section_card("Nouvelle poche d'épargne", "flag") %}
-            <form hx-post="/api/v1/epargne" hx-target="#liste-epargne" hx-swap="outerHTML" class="space-y-2">
-                <input name="nom" placeholder="Nom du projet (ex: Vacances)" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-                <input name="montant_cible" type="number" step="0.01" min="0.01" placeholder="Objectif (€)" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg py-2 transition flex items-center justify-center gap-2">
-                    {{ icons.icon("plus", "16") }} Créer
-                </button>
-            </form>
-        {% endcall %}
-
-        <!-- Déclarer un placement -->
+    <div>
         {% call components.section_card("Nouveau placement", "chart-bar") %}
             <form hx-post="/api/v1/investissements" hx-target="#liste-placements" hx-swap="outerHTML" class="space-y-2">
                 <input name="nom_support" placeholder="Nom (ex: PEA Bourso)" required
@@ -52,56 +156,9 @@
                 </button>
             </form>
         {% endcall %}
-
     </div>
 
-    <!-- ========== COLONNE DROITE : TABLEAUX ========== -->
-    <div class="lg:col-span-2 space-y-4">
-
-        <!-- Jauges d'épargne -->
-        <div id="liste-epargne" class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <div class="flex items-center gap-2 mb-4">
-                {{ icons.icon("flag", "18") }}
-                <h2 class="text-xs font-semibold text-gray-300 uppercase tracking-widest">Objectifs d'épargne</h2>
-            </div>
-            {% if objectifs %}
-                <div class="space-y-4">
-                {% for obj in objectifs %}
-                <div>
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-white text-sm font-medium">{{ obj.nom }}</span>
-                        <span class="text-xs text-gray-400">
-                            <span class="valeur text-purple-400 font-semibold">{{ "%.2f"|format(obj.montant_actuel) }} €</span>
-                            <span class="text-gray-600"> / {{ "%.2f"|format(obj.montant_cible) }} €</span>
-                        </span>
-                    </div>
-                    <!-- Barre de progression -->
-                    <div class="w-full bg-gray-800 rounded-full h-2">
-                        <div class="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                             style="width: {{ [obj.progression_pct, 100]|min }}%"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="text-xs text-gray-500">{{ obj.progression_pct }}%</span>
-                        <!-- Formulaire d'alimentation rapide -->
-                        <form hx-put="/api/v1/epargne/{{ obj.id }}/update" hx-target="#liste-epargne" hx-swap="outerHTML"
-                              class="flex gap-2">
-                            <input name="montant" type="number" step="0.01" placeholder="±€"
-                                class="w-24 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-                            <button type="submit"
-                                class="bg-purple-700 hover:bg-purple-600 text-white text-xs font-medium rounded-lg px-3 py-1 transition">
-                                Mettre à jour
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-gray-500 text-sm">Aucun objectif d'épargne. Créez-en un à gauche.</p>
-            {% endif %}
-        </div>
-
-        <!-- Tableau des placements -->
+    <div class="lg:col-span-2">
         <div id="liste-placements" class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
             <div class="flex items-center gap-2 p-4 pb-3">
                 {{ icons.icon("chart-bar", "18") }}
@@ -150,8 +207,163 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
+</div>
+
+<!-- ==================== MODAL : NOUVEL OBJECTIF D'ÉPARGNE ==================== -->
+<div id="modal-nouvel-objectif" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerNouvelObjectif()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 bg-gray-950">
+            <div class="flex items-center gap-2">
+                {{ icons.icon("flag", "16", class="text-purple-400") }}
+                <h3 class="text-sm font-semibold text-white">Nouvel objectif d'épargne</h3>
+            </div>
+            <button type="button" onclick="fermerNouvelObjectif()" class="text-gray-500 hover:text-white transition">
+                {{ icons.icon("x-circle", "20") }}
+            </button>
+        </div>
+        <form onsubmit="return creerObjectif(event)" class="p-4 space-y-3">
+            <input name="nom" placeholder="Nom du projet (ex: Livret A, Vacances, Fonds d'urgence…)" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            <input name="montant_cible" type="number" step="0.01" min="0.01" placeholder="Objectif visé (€)" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            <select name="id_compte"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500">
+                <option value="">— Compte associé (optionnel) —</option>
+                {% for c in comptes %}
+                <option value="{{ c.id }}">{{ c.nom_banque }}</option>
+                {% endfor %}
+            </select>
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Date cible (optionnelle)</label>
+                <input name="date_limite" type="date"
+                    class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500" />
+            </div>
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg py-2 transition flex items-center justify-center gap-2">
+                {{ icons.icon("plus", "16") }} Créer l'objectif
+            </button>
+        </form>
     </div>
 </div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+function fermerNouvelObjectif() {
+    document.getElementById('modal-nouvel-objectif').classList.add('hidden');
+}
+
+async function creerObjectif(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    if (!formData.get('id_compte')) formData.delete('id_compte');
+    if (!formData.get('date_limite')) formData.delete('date_limite');
+
+    const res = await fetch('/api/v1/epargne', { method: 'POST', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la création de l'objectif");
+    }
+    return false;
+}
+
+async function epargnerSurObjectif(event, objectifId) {
+    event.preventDefault();
+    const form = event.target;
+    const montant = form.montant.value;
+    if (!montant || parseFloat(montant) === 0) {
+        alert('Indiquez un montant à ajouter ou retirer (positif ou négatif).');
+        return false;
+    }
+    const formData = new FormData();
+    formData.append('montant', montant);
+    formData.append('deduire_compte', (form.deduire_compte && form.deduire_compte.checked) ? 'true' : 'false');
+
+    const res = await fetch(`/api/v1/epargne/${objectifId}/update`, { method: 'PUT', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la mise à jour de l'épargne");
+    }
+    return false;
+}
+
+async function cloturerObjectif(btn) {
+    const id = btn.dataset.id;
+    const nom = btn.dataset.nom;
+    if (!confirm(`Clôturer l'objectif "${nom}" ? Il ne sera plus affiché mais son historique est conservé.`)) return;
+    const res = await fetch(`/api/v1/epargne/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+        location.reload();
+    } else {
+        alert("Erreur lors de la clôture de l'objectif");
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fermerNouvelObjectif();
+});
+
+{% if evolution %}
+const evoCtx = document.getElementById('evolutionEpargneChart');
+if (evoCtx) {
+    new Chart(evoCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for e in evolution %}'{{ e.label }}',{% endfor %}],
+            datasets: [{
+                data: [{% for e in evolution %}{{ e.total }},{% endfor %}],
+                borderColor: '#a855f7',
+                backgroundColor: 'rgba(168, 85, 247, 0.12)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 2,
+                pointBackgroundColor: '#a855f7',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { display: false } },
+                y: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+{% endif %}
+
+{% if objectifs %}
+const repCtx = document.getElementById('repartitionEpargneChart');
+if (repCtx) {
+    const COLORS = [{% for c in chart_colors %}'{{ c }}',{% endfor %}];
+    new Chart(repCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for obj in objectifs %}'{{ obj.nom | replace("\\", "\\\\") | replace("'", "\\'") }}',{% endfor %}],
+            datasets: [{
+                data: [{% for obj in objectifs %}{{ obj.montant_actuel }},{% endfor %}],
+                backgroundColor: COLORS.slice(0, {{ objectifs|length }}),
+                borderColor: '#111827',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+{% endif %}
+</script>
 
 {% endblock %}

@@ -6,6 +6,7 @@ class ObjectifEpargneBase(BaseModel):
     nom: str
     montant_cible: float
     date_limite: datetime | None = None
+    id_compte: int | None = None
 
     @field_validator("montant_cible")
     @classmethod
@@ -13,15 +14,6 @@ class ObjectifEpargneBase(BaseModel):
         if v <= 0:
             raise ValueError("Le montant cible doit être strictement positif.")
         return v
-
-
-class ObjectifEpargneCreate(ObjectifEpargneBase):
-    pass
-
-
-class MouvementEpargne(BaseModel):
-    """Payload pour alimenter ou retirer d'une poche d'épargne."""
-    montant: float  # positif = dépôt, négatif = retrait
 
 
 class ObjectifEpargneRead(ObjectifEpargneBase):

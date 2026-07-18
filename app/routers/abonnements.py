@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.abonnement import Abonnement
 from app.models.compte import Compte
 from app.schemas.abonnement import AbonnementCreate, AbonnementUpdate, AbonnementRead
+from app.services.finances import CHART_COLORS
 
 router = APIRouter(tags=["Abonnements"])
 templates = Jinja2Templates(directory="app/templates")
@@ -29,12 +30,6 @@ MOIS_FR = [
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ]
 JOURS_SEMAINE_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
-
-CHART_COLORS = [
-    "#f97316", "#ef4444", "#8b5cf6", "#3b82f6",
-    "#10b981", "#eab308", "#ec4899", "#06b6d4",
-    "#84cc16", "#f43f5e", "#6366f1", "#14b8a6",
-]
 
 
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
