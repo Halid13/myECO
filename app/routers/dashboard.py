@@ -44,12 +44,18 @@ def _build_dashboard_context(db: Session) -> dict:
 
     # Reste à vivre = Revenus - Dépenses fixes
     reste_a_vivre = revenus_mois - charges_mensuelles
-    prochains = [
-        a for a in abonnements
-        if abs(a.jour_prelevement - today.day) <= 7
-        or (today.day > 24 and a.jour_prelevement <= 7)
-    ]
-    prochains.sort(key=lambda a: a.jour_prelevement)
+    from calendar import monthrange
+    jours_dans_mois = monthrange(today.year, today.month)[1]
+    prochains = []
+    for a in abonnements:
+        if a.jour_prelevement >= today.day:
+            jours_restants = a.jour_prelevement - today.day
+        else:
+            jours_restants = (jours_dans_mois - today.day) + a.jour_prelevement
+        if jours_restants <= 7:
+            a.jours_restants = jours_restants
+            prochains.append(a)
+    prochains.sort(key=lambda a: a.jours_restants)
 
     alertes = generer_alertes(db)
 

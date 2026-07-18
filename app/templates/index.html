@@ -7,31 +7,23 @@
 
 <!-- ==================== EN-TÊTE ==================== -->
 <div class="mb-6">
-    <div class="flex items-center justify-between mb-2">
-        <div>
-            <h1 class="text-3xl font-bold text-white">Tableau de bord</h1>
-            <p class="text-xs text-gray-500 mt-1">Aperçu de votre situation financière</p>
-        </div>
-        <button id="toggle-discretion" 
-                onclick="toggleDiscretion()" 
-                class="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs rounded-lg transition">
-            <span id="icone-discretion">{{ icons.icon("eye", "16") }}</span>
-            <span id="texte-discretion">Mode discrétion</span>
-        </button>
-    </div>
+    <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Tableau de bord</h1>
+    <p class="text-xs text-gray-500 mt-1">Aperçu de votre situation financière</p>
 </div>
 
 <!-- ==================== SECTION 1 : INDICATEUR LIQUIDITÉ PRINCIPALE ==================== -->
 <section class="mb-6">
-    <div class="bg-gradient-to-br from-emerald-900/20 to-emerald-900/5 border border-emerald-800/30 rounded-xl p-6">
-        <div class="flex items-end justify-between">
+    <div class="card-hero bg-gradient-to-br from-emerald-900/25 via-emerald-950/10 to-gray-900 border border-emerald-800/30 rounded-lg p-6 md:p-7">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">💼 Liquidités totales</p>
-                <p class="valeur text-4xl font-bold text-emerald-400">{{ "%.2f"|format(total_liquidites) }} €</p>
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                    {{ icons.icon("banknotes", "14", class="text-emerald-500") }} Liquidités totales
+                </p>
+                <p class="valeur text-4xl md:text-5xl font-extrabold text-emerald-400 tracking-tight">{{ "%.2f"|format(total_liquidites) }} €</p>
                 <p class="text-xs text-gray-600 mt-2">Solde disponible immédiatement</p>
             </div>
-            <div class="text-right">
-                <p class="text-xs text-gray-500 uppercase mb-2">Patrimoine total</p>
+            <div class="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-emerald-900/30 pt-3 sm:pt-0 sm:pl-6">
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1.5">Patrimoine total</p>
                 <p class="valeur text-2xl font-bold text-gray-200">{{ "%.2f"|format(total_patrimoine) }} €</p>
             </div>
         </div>
@@ -41,7 +33,7 @@
 <!-- ==================== SECTION 2 : VUE BANCAIRE GLOBALE ==================== -->
 <section class="mb-6">
     <div class="flex items-center gap-2 mb-3">
-        {{ icons.icon("landmark", "18") }}
+        {{ icons.icon("landmark", "16", class="text-gray-500") }}
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Comptes bancaires</h2>
     </div>
     {% if comptes %}
@@ -60,13 +52,28 @@
     {% endif %}
 </section>
 
-<!-- ==================== SECTION 3 : RÉPARTITION PATRIMONIALE + RÉSUMÉ MENSUEL ==================== -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<!-- ==================== SECTION 3 : PROCHAINES ÉCHÉANCES ==================== -->
+<section class="mb-6">
+    {% call components.section_card("Prochaines échéances (7 jours)", "bell", "/abonnements/", "Gérer") %}
+    {% if prochains_prelevements %}
+    <div>
+        {% for a in prochains_prelevements %}
+        {{ components.echeance_row(a) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-600 py-2">Aucun prélèvement prévu dans les 7 prochains jours.</p>
+    {% endif %}
+    {% endcall %}
+</section>
+
+<!-- ==================== SECTION 4 : RÉPARTITION + RÉSUMÉ MENSUEL ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
 
     <!-- Répartition patrimoniale (Donut) -->
     <div class="lg:col-span-1">
         {% call components.section_card("Répartition du patrimoine", "chart-pie") %}
-        <div class="space-y-2 mb-4">
+        <div class="mb-4">
             <canvas id="patrimoineChart" style="max-height: 150px;"></canvas>
         </div>
         <div class="space-y-2 text-xs">
@@ -94,34 +101,13 @@
             {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "minus-circle", "red") }}
             {{ components.kpi_mini("Reste à vivre", reste_a_vivre, "€", "calculator", "blue") }}
         </div>
-        <div class="border-t border-gray-800 mt-3 pt-3">
-            <p class="text-xs text-gray-500 flex items-center gap-2">
-                {{ icons.icon("calendar", "14") }} 
-                <span>Prochains prélèvements (7j)</span>
-            </p>
-            {% if prochains_prelevements %}
-            <div class="space-y-1 mt-2 text-xs">
-                {% for a in prochains_prelevements[:3] %}
-                <div class="flex justify-between">
-                    <span class="text-gray-400">{{ a.libelle }}</span>
-                    <span class="text-orange-400">- {{ "%.0f"|format(a.montant) }} €</span>
-                </div>
-                {% endfor %}
-                {% if prochains_prelevements|length > 3 %}
-                <p class="text-gray-600 italic">+{{ prochains_prelevements|length - 3 }} autre(s)</p>
-                {% endif %}
-            </div>
-            {% else %}
-            <p class="text-xs text-gray-600 mt-1">Aucun prélèvement imminent</p>
-            {% endif %}
-        </div>
         {% endcall %}
     </div>
 
 </div>
 
-<!-- ==================== SECTION 4 : ÉPARGNE & INVESTISSEMENTS ==================== -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<!-- ==================== SECTION 5 : ÉPARGNE & INVESTISSEMENTS ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
 
     <!-- Objectifs épargne -->
     <div>
@@ -159,11 +145,11 @@
 
 </div>
 
-<!-- ==================== SECTION 5 : ALERTES ==================== -->
+<!-- ==================== SECTION 6 : ALERTES ==================== -->
 {% if alertes %}
 <section class="mb-6">
     <div class="flex items-center gap-2 mb-3">
-        {{ icons.icon("sparkles", "18") }}
+        {{ icons.icon("sparkles", "16", class="text-gray-500") }}
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Conseils & alertes</h2>
     </div>
     <div class="space-y-2">
@@ -174,9 +160,9 @@
 </section>
 {% endif %}
 
-<!-- ==================== SECTION 6 : ACTIVITÉ RÉCENTE ==================== -->
+<!-- ==================== SECTION 7 : ACTIVITÉ RÉCENTE ==================== -->
 <section>
-    {% call components.section_card("Derniers mouvements", "calendar") %}
+    {% call components.section_card("Derniers mouvements", "calendar", "/comptes/", "Historique complet") %}
     {% if mouvements %}
     <div class="overflow-x-auto">
         <table class="w-full text-xs">
@@ -194,9 +180,6 @@
             </tbody>
         </table>
     </div>
-    <a href="/comptes/" class="inline-block mt-3 text-emerald-400 text-xs font-medium hover:underline">
-        {{ icons.icon("arrow-right", "12", class="inline mr-1") }} Voir l'historique complet
-    </a>
     {% else %}
     <p class="text-xs text-gray-500">Aucun mouvement enregistré</p>
     {% endif %}
@@ -206,7 +189,6 @@
 <!-- ==================== SCRIPT CHART.JS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Données pour le graphique donut
 const patrimoineCtx = document.getElementById('patrimoineChart');
 if (patrimoineCtx) {
     new Chart(patrimoineCtx, {
@@ -216,7 +198,7 @@ if (patrimoineCtx) {
             datasets: [{
                 data: [{{ total_liquidites }}, {{ total_epargne }}, {{ total_investissements }}],
                 backgroundColor: ['#3b82f6', '#8b5cf6', '#eab308'],
-                borderColor: ['#1f2937', '#1f2937', '#1f2937'],
+                borderColor: ['#111827', '#111827', '#111827'],
                 borderWidth: 2,
             }]
         },
@@ -231,33 +213,6 @@ if (patrimoineCtx) {
         }
     });
 }
-
-// Mode discrétion
-const DISCRETION_KEY = 'finansmart-discretion-mode';
-
-function toggleDiscretion() {
-    const valeurs = document.querySelectorAll('.valeur');
-    const isDiscret = localStorage.getItem(DISCRETION_KEY) === 'true';
-    
-    if (isDiscret) {
-        valeurs.forEach(el => el.classList.remove('blur-sm', 'select-none'));
-        localStorage.removeItem(DISCRETION_KEY);
-        document.getElementById('texte-discretion').textContent = 'Mode discrétion';
-    } else {
-        valeurs.forEach(el => {
-            el.classList.add('blur-sm', 'select-none');
-        });
-        localStorage.setItem(DISCRETION_KEY, 'true');
-        document.getElementById('texte-discretion').textContent = 'Mode visible';
-    }
-}
-
-// Appliquer le mode discrétion au chargement
-window.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem(DISCRETION_KEY) === 'true') {
-        toggleDiscretion();
-    }
-});
 </script>
 
 {% endblock %}

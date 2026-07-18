@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% import "icons.html" as icons %}
+{% import "components.html" as components %}
 {% block title %}Charges Fixes & Abonnements{% endblock %}
 
 {% block content %}
 
 <!-- ==================== EN-TÊTE ==================== -->
-<div class="flex items-center justify-between mb-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
     <div>
-        <h1 class="text-3xl font-bold text-white">Charges Fixes</h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Charges Fixes</h1>
         <p class="text-xs text-gray-500 mt-1">Gestion des abonnements et dépenses récurrentes</p>
     </div>
     <button onclick="document.getElementById('form-panel').classList.toggle('hidden')"
@@ -21,25 +22,25 @@
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("repeat", "16", class="text-orange-400 mb-2") }}
-        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Charge mensuelle</p>
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Charge mensuelle</p>
         <p class="valeur text-xl font-bold text-orange-400">{{ "%.2f"|format(total_mensuel) }} €</p>
     </div>
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("calendar", "16", class="text-red-400 mb-2") }}
-        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Coût annuel</p>
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Coût annuel</p>
         <p class="valeur text-xl font-bold text-red-400">{{ "%.2f"|format(total_annuel) }} €</p>
     </div>
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("squares", "16", class="text-blue-400 mb-2") }}
-        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Abonnements actifs</p>
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Abonnements actifs</p>
         <p class="text-xl font-bold text-blue-400">{{ nb_actifs }}</p>
     </div>
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("bell", "16", class="text-yellow-400 mb-2") }}
-        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Prochaine échéance</p>
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Prochaine échéance</p>
         {% if prochains %}
         <p class="text-xl font-bold text-yellow-400">
             {% if prochains[0].jours_restants == 0 %}
@@ -61,31 +62,13 @@
 <!-- ==================== PROCHAINS 7 JOURS ==================== -->
 {% if prochains %}
 <section class="mb-6">
-    <div class="flex items-center gap-2 mb-3">
-        {{ icons.icon("bell", "16", class="text-yellow-400") }}
-        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Prélèvements imminents (7 jours)</h2>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% call components.section_card("Prélèvements imminents (7 jours)", "bell") %}
+    <div>
         {% for a in prochains %}
-        <div class="bg-gradient-to-br from-orange-950/30 to-gray-900 border border-orange-800/40 rounded-lg p-4 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                {% if a.jours_restants == 0 %}bg-red-900/60 text-red-300
-                {% elif a.jours_restants <= 2 %}bg-orange-900/60 text-orange-300
-                {% else %}bg-yellow-900/40 text-yellow-400{% endif %}">
-                <span class="text-xs font-bold">
-                    {% if a.jours_restants == 0 %}Auj.
-                    {% elif a.jours_restants == 1 %}Dem.
-                    {% else %}J-{{ a.jours_restants }}{% endif %}
-                </span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-white truncate">{{ a.libelle }}</p>
-                <p class="text-xs text-gray-500">{{ a.compte.nom_banque }} · Le {{ a.jour_prelevement }}</p>
-            </div>
-            <span class="valeur text-sm font-bold text-orange-400 flex-shrink-0">- {{ "%.2f"|format(a.montant) }} €</span>
-        </div>
+        {{ components.echeance_row(a) }}
         {% endfor %}
     </div>
+    {% endcall %}
 </section>
 {% endif %}
 
@@ -95,7 +78,7 @@
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
             {{ icons.icon("plus", "16") }} Ajouter un abonnement
         </p>
-        <form hx-post="/api/v1/abonnements" 
+        <form hx-post="/api/v1/abonnements"
               hx-on::after-request="if(event.detail.xhr.status === 201) { location.reload(); }">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <input name="libelle" placeholder="Nom (Netflix, EDF, Salle de sport…)" required
@@ -111,7 +94,7 @@
                         {% endfor %}
                         <option value="__custom__">Autre (personnalisée)</option>
                     </select>
-                    <input id="custom-categorie" name="categorie_custom" type="text" placeholder="Votre catégorie personnalisée" 
+                    <input id="custom-categorie" name="categorie_custom" type="text" placeholder="Votre catégorie personnalisée"
                         class="hidden w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
                 </div>
                 <select name="frequence"
@@ -146,17 +129,13 @@
 </div>
 
 <!-- ==================== CONTENU PRINCIPAL ==================== -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
     <!-- ========== COLONNE GAUCHE : RÉPARTITION PAR CATÉGORIE ========== -->
     <div class="space-y-4">
 
         <!-- Graphique donut -->
-        <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <div class="flex items-center gap-2 mb-4">
-                {{ icons.icon("chart-pie", "16") }}
-                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Par catégorie</h3>
-            </div>
+        {% call components.section_card("Par catégorie", "chart-pie") %}
             {% if categories %}
             <div style="max-height: 180px;">
                 <canvas id="categoriesChart"></canvas>
@@ -175,14 +154,10 @@
                 <p class="text-xs text-gray-500">Aucune donnée</p>
             </div>
             {% endif %}
-        </div>
+        {% endcall %}
 
         <!-- Répartition budget -->
-        <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <div class="flex items-center gap-2 mb-3">
-                {{ icons.icon("chart-bar", "16") }}
-                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Impact budget</h3>
-            </div>
+        {% call components.section_card("Impact budget", "chart-bar") %}
             <div class="space-y-2 text-xs">
                 <div class="flex justify-between">
                     <span class="text-gray-400">Mensuel</span>
@@ -197,7 +172,7 @@
                     <span class="valeur text-gray-300 font-semibold">{{ "%.2f"|format(total_mensuel / 30) }} €</span>
                 </div>
             </div>
-        </div>
+        {% endcall %}
 
     </div>
 
@@ -332,7 +307,7 @@
 function toggleCustomCategorie() {
     const select = document.getElementById('categorie-select');
     const customInput = document.getElementById('custom-categorie');
-    
+
     if (select.value === '__custom__') {
         customInput.classList.remove('hidden');
         customInput.focus();
@@ -348,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             const select = document.getElementById('categorie-select');
             const customInput = document.getElementById('custom-categorie');
-            
+
             if (select.value === '__custom__') {
                 // Si "Autre" est sélectionné, utiliser la valeur du champ personnalisé
                 if (!customInput.value.trim()) {

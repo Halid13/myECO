@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#020817" />
     <title>FinanSmart — {% block title %}{% endblock %}</title>
-    
+
     <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -14,6 +14,7 @@
             theme: {
                 extend: {
                     fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
@@ -25,43 +26,109 @@
             }
         }
     </script>
-    
+
+    <!-- Police Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    
+
     <!-- CSS personnalisé -->
     <link rel="stylesheet" href="/static/css/custom.css" />
 </head>
-<body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
+<body class="bg-slate-950 text-gray-100 min-h-screen font-sans antialiased">
+    {% import "icons.html" as icons %}
 
-    <!-- Navigation principale -->
-    <nav class="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2 group">
-                <span class="text-2xl">💰</span>
-                <span class="text-emerald-400 font-bold text-lg tracking-tight group-hover:text-emerald-300 transition">FinanSmart</span>
+    {% set nav_items = [
+        ("/", "home", "Dashboard"),
+        ("/comptes/", "landmark", "Comptes"),
+        ("/abonnements/", "repeat", "Abonnements"),
+        ("/patrimoine/", "chart-pie", "Patrimoine"),
+    ] %}
+
+    <!-- ==================== SIDEBAR (desktop) ==================== -->
+    <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 w-56 bg-gray-950 border-r border-gray-900 z-40">
+        <a href="/" class="flex items-center gap-2 h-16 px-5 border-b border-gray-900 flex-shrink-0 group">
+            <span class="text-xl">💰</span>
+            <span class="text-white font-bold text-base tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
+        </a>
+
+        <nav class="flex-1 px-3 py-5 space-y-1">
+            {% for href, icon_name, label in nav_items %}
+            {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
+            <a href="{{ href }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+                      {% if is_active %}bg-emerald-500/10 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900{% endif %}">
+                {{ icons.icon(icon_name, "18") }}
+                <span>{{ label }}</span>
             </a>
-            
-            <div class="flex items-center gap-6">
-                <a href="/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Dashboard</a>
-                <a href="/comptes/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Comptes</a>
-                <a href="/abonnements/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Abonnements</a>
-                <a href="/patrimoine/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Patrimoine</a>
-            </div>
+            {% endfor %}
+        </nav>
+
+        <div class="px-3 py-4 border-t border-gray-900 flex-shrink-0">
+            <button id="toggle-discretion"
+                    onclick="toggleDiscretion()"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-200 hover:bg-gray-900 transition">
+                <span id="icone-discretion" class="flex-shrink-0">{{ icons.icon("eye", "18") }}</span>
+                <span id="texte-discretion">Mode discrétion</span>
+            </button>
+            <p class="text-[11px] text-gray-700 text-center mt-3">FinanSmart v1.0 · Local &amp; souverain</p>
         </div>
+    </aside>
+
+    <!-- ==================== BOTTOM NAV (mobile) ==================== -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-gray-950/95 backdrop-blur-md border-t border-gray-900 flex items-stretch">
+        {% for href, icon_name, label in nav_items %}
+        {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
+        <a href="{{ href }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 {% if is_active %}text-emerald-400{% else %}text-gray-500{% endif %}">
+            {{ icons.icon(icon_name, "20") }}
+            <span class="text-[10px] font-medium">{{ label }}</span>
+        </a>
+        {% endfor %}
+        <button onclick="toggleDiscretion()" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-gray-500">
+            <span id="icone-discretion-mobile">{{ icons.icon("eye", "20") }}</span>
+            <span class="text-[10px] font-medium">Discret</span>
+        </button>
     </nav>
 
-    <!-- Contenu principal -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
-        {% block content %}{% endblock %}
+    <!-- ==================== CONTENU PRINCIPAL ==================== -->
+    <main class="md:ml-56 px-4 md:px-8 py-6 md:py-10 pb-24 md:pb-10">
+        <div class="max-w-6xl mx-auto">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-gray-900 bg-gray-950 mt-16 py-8 px-6">
-        <div class="max-w-7xl mx-auto text-center text-xs text-gray-600">
-            <p>FinanSmart v1.0 — Gestion financière 100% locale et souveraine</p>
-        </div>
+    <footer class="hidden md:block md:ml-56 border-t border-gray-900 py-6 px-8">
+        <p class="text-center text-[11px] text-gray-700">FinanSmart — Gestion financière 100% locale et souveraine</p>
     </footer>
+
+    <!-- ==================== MODE DISCRÉTION (global) ==================== -->
+    <script>
+    const DISCRETION_KEY = 'finansmart-discretion-mode';
+
+    function applyDiscretion(isDiscret) {
+        const valeurs = document.querySelectorAll('.valeur');
+        valeurs.forEach(el => {
+            el.classList.toggle('blur-sm', isDiscret);
+            el.classList.toggle('select-none', isDiscret);
+        });
+        const texte = document.getElementById('texte-discretion');
+        if (texte) texte.textContent = isDiscret ? 'Mode visible' : 'Mode discrétion';
+    }
+
+    function toggleDiscretion() {
+        const isDiscret = localStorage.getItem(DISCRETION_KEY) === 'true';
+        const next = !isDiscret;
+        localStorage.setItem(DISCRETION_KEY, next);
+        applyDiscretion(next);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        applyDiscretion(localStorage.getItem(DISCRETION_KEY) === 'true');
+    });
+    </script>
 
 </body>
 </html>
