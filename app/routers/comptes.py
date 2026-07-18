@@ -96,19 +96,26 @@ def creer_mouvement(
     description: str = Form(None),
     db: Session = Depends(get_db)
 ):
+    from app.models.mouvement import TypeMouvement
+    
     compte = db.get(Compte, id_compte)
     if not compte:
         raise HTTPException(status_code=404, detail="Compte introuvable")
+    
+    # Convertir string en Enum
+    type_enum = TypeMouvement(type)
+    
     mouvement = Mouvement(
         id_compte=id_compte,
-        type=type,
+        type=type_enum,
         montant=montant,
         categorie=categorie,
         description=description,
         date_mouvement=datetime.now(timezone.utc)
     )
+    
     # Mise à jour du solde du compte
-    if mouvement.type.value == "Entrée":
+    if type_enum == TypeMouvement.entree:
         compte.solde += mouvement.montant
     else:
         compte.solde -= mouvement.montant

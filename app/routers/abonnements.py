@@ -94,10 +94,15 @@ def creer_abonnement(
     categorie: str = Form(None),
     db: Session = Depends(get_db)
 ):
+    from app.models.abonnement import FrequenceAbonnement
+    
+    # Convertir string en Enum
+    frequence_enum = FrequenceAbonnement(frequence)
+    
     abonnement = Abonnement(
         libelle=libelle,
         montant=montant,
-        frequence=frequence,
+        frequence=frequence_enum,
         jour_prelevement=jour_prelevement,
         id_compte=id_compte,
         categorie=categorie,
