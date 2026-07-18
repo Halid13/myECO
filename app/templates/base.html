@@ -68,6 +68,24 @@
                 {% endfor %}
             </div>
 
+            <!-- Bouton Notifications -->
+            <div class="relative flex-shrink-0 ml-1">
+                <button id="toggle-notifications"
+                        onclick="toggleNotifications(event)"
+                        title="Conseils & alertes"
+                        class="relative flex items-center justify-center w-10 h-10 rounded-full
+                               bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                               shadow-inner hover:text-gray-200 hover:border-gray-600 transition-all duration-300">
+                    {{ icons.icon("bell", "18") }}
+                    <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-gray-950"></span>
+                </button>
+
+                <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-gray-950/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl p-3">
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
+                    <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+            </div>
+
             <!-- Bouton Mode discrétion -->
             <button id="toggle-discretion"
                     onclick="toggleDiscretion()"
@@ -129,6 +147,76 @@
 
     window.addEventListener('DOMContentLoaded', () => {
         applyDiscretion(localStorage.getItem(DISCRETION_KEY) === 'true');
+        chargerAlertes();
+    });
+
+    // ===== NOTIFICATIONS (Conseils & alertes) =====
+    const NOTIF_STYLES = {
+        warning: 'bg-orange-950/30 border-orange-800/60 text-orange-300',
+        success: 'bg-emerald-950/30 border-emerald-800/60 text-emerald-300',
+        info: 'bg-blue-950/30 border-blue-800/60 text-blue-300',
+    };
+
+    async function chargerAlertes() {
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+        if (!badge || !list) return;
+
+        try {
+            const res = await fetch('/api/v1/assistant/alerts');
+            const data = await res.json();
+            const alertes = data.alertes || [];
+
+            if (alertes.length > 0) {
+                badge.textContent = alertes.length > 9 ? '9+' : String(alertes.length);
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            list.innerHTML = '';
+            if (alertes.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-xs text-gray-600 px-1 py-2';
+                empty.textContent = 'Aucune alerte pour le moment.';
+                list.appendChild(empty);
+                return;
+            }
+
+            alertes.forEach(a => {
+                const row = document.createElement('div');
+                row.className = `notif-item flex items-start gap-2 p-2.5 rounded-lg border text-xs leading-relaxed ${NOTIF_STYLES[a.niveau] || NOTIF_STYLES.info}`;
+
+                const msg = document.createElement('span');
+                msg.className = 'flex-1';
+                msg.textContent = a.message;
+                row.appendChild(msg);
+
+                if (a.lien) {
+                    const link = document.createElement('a');
+                    link.href = a.lien;
+                    link.className = 'underline opacity-70 hover:opacity-100 whitespace-nowrap flex-shrink-0 font-medium';
+                    link.textContent = 'Voir →';
+                    row.appendChild(link);
+                }
+                list.appendChild(row);
+            });
+        } catch (e) {
+            console.error('Erreur chargement alertes:', e);
+        }
+    }
+
+    function toggleNotifications(event) {
+        event.stopPropagation();
+        document.getElementById('notif-panel')?.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+        const panel = document.getElementById('notif-panel');
+        const btn = document.getElementById('toggle-notifications');
+        if (panel && !panel.classList.contains('hidden') && !panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.classList.add('hidden');
+        }
     });
     </script>
 

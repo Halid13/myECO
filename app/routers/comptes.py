@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement
+from app.models.abonnement import Abonnement
 from app.schemas.compte import CompteCreate, CompteRead, CompteUpdate
 from app.schemas.mouvement import MouvementCreate, MouvementRead
 
@@ -65,11 +66,35 @@ def ajuster_solde(
     return compte
 
 
+@router.put("/api/v1/comptes/{compte_id}", response_model=CompteRead, summary="Modifier un compte (nom, solde)")
+def modifier_compte(
+    compte_id: int,
+    nom_banque: str = Form(None),
+    solde: float = Form(None),
+    db: Session = Depends(get_db)
+):
+    compte = db.get(Compte, compte_id)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+    if nom_banque is not None:
+        compte.nom_banque = nom_banque
+    if solde is not None:
+        compte.solde = solde
+    compte.date_maj = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(compte)
+    return compte
+
+
 @router.delete("/api/v1/comptes/{compte_id}", status_code=204, summary="Supprimer un compte")
 def supprimer_compte(compte_id: int, db: Session = Depends(get_db)):
     compte = db.get(Compte, compte_id)
     if not compte:
         raise HTTPException(status_code=404, detail="Compte introuvable")
+    # Pas de cascade FK configurée côté DB : on supprime explicitement
+    # les mouvements et abonnements liés pour éviter les lignes orphelines.
+    db.query(Mouvement).filter(Mouvement.id_compte == compte_id).delete()
+    db.query(Abonnement).filter(Abonnement.id_compte == compte_id).delete()
     db.delete(compte)
     db.commit()
 

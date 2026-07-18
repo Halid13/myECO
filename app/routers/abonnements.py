@@ -24,6 +24,12 @@ COEFF_ANNUEL = {
     "Mensuelle": 12, "Trimestrielle": 4, "Semestrielle": 2, "Annuelle": 1
 }
 
+MOIS_FR = [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+]
+JOURS_SEMAINE_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+
 
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
 def page_abonnements(request: Request, db: Session = Depends(get_db)):
@@ -34,7 +40,8 @@ def page_abonnements(request: Request, db: Session = Depends(get_db)):
         .all()
     )
     today = date.today()
-    days_in_month = calendar.monthrange(today.year, today.month)[1]
+    premier_jour_semaine, days_in_month = calendar.monthrange(today.year, today.month)
+    mois_annee_fr = f"{MOIS_FR[today.month - 1].capitalize()} {today.year}"
 
     total_mensuel = round(sum(
         a.montant * COEFF_MENSUEL.get(a.frequence.value, 1)
@@ -81,6 +88,9 @@ def page_abonnements(request: Request, db: Session = Depends(get_db)):
         "today": today,
         "categories_liste": CATEGORIES,
         "days_in_month": days_in_month,
+        "premier_jour_semaine": premier_jour_semaine,
+        "mois_annee_fr": mois_annee_fr,
+        "jours_semaine_fr": JOURS_SEMAINE_FR,
     })
 
 

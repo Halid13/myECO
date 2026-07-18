@@ -155,12 +155,12 @@ input::placeholder, select {
     background: rgba(107, 114, 128, 0.7);
 }
 
-/* ===== ALERTES MINIMALISTES ===== */
-.alert-banner-compact {
+/* ===== ALERTES MINIMALISTES (dropdown notifications) ===== */
+.notif-item {
     animation: fade-in-up 0.3s ease-out;
 }
 
-.alert-banner-compact:hover {
+.notif-item:hover {
     transform: translateX(2px);
     transition: transform 0.2s ease;
 }

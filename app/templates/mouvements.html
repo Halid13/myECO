@@ -20,34 +20,35 @@
 
 <!-- ==================== SECTION 1 : VUE DES COMPTES ==================== -->
 <section class="mb-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {% for c in comptes %}
-        <a href="/comptes/?compte_id={{ c.id }}"
-           class="bg-gradient-to-br from-gray-800 to-gray-900 border rounded-lg p-4 hover:border-emerald-600/60 transition group {% if filtre_compte_id == c.id %}border-emerald-600 ring-1 ring-emerald-600/30{% else %}border-gray-700{% endif %}">
-            <div class="flex justify-between items-start mb-3">
-                <div class="min-w-0">
-                    <p class="text-xs text-gray-500 uppercase tracking-wider truncate">{{ c.nom_banque }}</p>
-                    <p class="text-[11px] text-gray-600">Compte courant</p>
-                </div>
-                {{ icons.icon("building-bank", "16", class="text-gray-600 group-hover:text-emerald-400 transition flex-shrink-0") }}
-            </div>
-            <p class="valeur text-lg font-bold text-white mb-2 truncate">{{ "%.2f"|format(c.solde) }} €</p>
-            <p class="text-[11px] text-gray-600">MAJ {{ c.date_maj.strftime("%d/%m/%Y %H:%M") }}</p>
-        </a>
-        {% endfor %}
-
-        <!-- Bouton ajouter un compte -->
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            {{ icons.icon("landmark", "16", class="text-gray-500") }}
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Vos comptes</h2>
+        </div>
         <button onclick="document.getElementById('form-compte').classList.toggle('hidden')"
-                class="border border-dashed border-gray-700 hover:border-emerald-600 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-emerald-400 transition group min-h-[104px]">
-            {{ icons.icon("building-bank", "20", class="group-hover:text-emerald-400") }}
-            <span class="text-xs">Ajouter un compte</span>
+                title="Ajouter un compte"
+                class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-900 border border-gray-800 text-gray-400 hover:text-emerald-400 hover:border-emerald-600/50 transition">
+            {{ icons.icon("credit-card", "15") }}
         </button>
     </div>
+
+    {% if comptes %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for c in comptes %}
+        {{ components.bank_card_realistic(c, active=(filtre_compte_id == c.id)) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+        <p class="text-sm text-gray-400">Aucun compte enregistré.</p>
+        <p class="text-xs text-gray-600 mt-1">Utilisez le bouton ci-dessus pour ajouter votre premier compte.</p>
+    </div>
+    {% endif %}
 
     <!-- Formulaire ajout compte (masqué par défaut) -->
     <div id="form-compte" class="hidden mt-3 bg-gray-900 border border-gray-800 rounded-lg p-4">
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            {{ icons.icon("building-bank", "16") }} Nouveau compte
+            {{ icons.icon("credit-card", "16") }} Nouveau compte
         </p>
         <form hx-post="/api/v1/comptes"
               hx-on::after-request="if(event.detail.xhr.status === 201) { window.location.reload(); }"
@@ -104,24 +105,10 @@
             </form>
         {% endcall %}
 
-        <!-- Ajuster un solde -->
-        {% call components.section_card("Ajuster un solde", "adjustments") %}
-            <form id="form-ajust-solde" class="space-y-2">
-                <select id="ajust-compte-select"
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500">
-                    <option value="">— Compte —</option>
-                    {% for c in comptes %}
-                    <option value="{{ c.id }}">{{ c.nom_banque }} ({{ "%.2f"|format(c.solde) }} €)</option>
-                    {% endfor %}
-                </select>
-                <input id="ajust-solde-input" type="number" step="0.01" placeholder="Nouveau solde exact (€)"
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-orange-500" />
-                <button type="button" onclick="ajusterSolde()"
-                    class="w-full bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-lg py-2 transition flex items-center justify-center gap-2">
-                    {{ icons.icon("pencil", "16") }} Mettre à jour
-                </button>
-            </form>
-        {% endcall %}
+        <p class="text-[11px] text-gray-600 px-1 flex items-center gap-1.5">
+            {{ icons.icon("pencil", "12", class="flex-shrink-0") }}
+            Astuce : survolez une carte ci-dessus pour modifier son nom ou son solde.
+        </p>
 
     </div>
 
@@ -204,6 +191,47 @@
     </div>
 </div>
 
+<!-- ==================== MODAL : ÉDITION D'UN COMPTE ==================== -->
+<div id="modal-edit-compte" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerEditionCompte()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800">
+            <div class="flex items-center gap-2">
+                {{ icons.icon("pencil", "16", class="text-emerald-400") }}
+                <h3 class="text-sm font-semibold text-white">Modifier le compte</h3>
+            </div>
+            <button type="button" onclick="fermerEditionCompte()" class="text-gray-500 hover:text-white transition">
+                {{ icons.icon("x-circle", "20") }}
+            </button>
+        </div>
+        <form onsubmit="return enregistrerEditionCompte(event)" class="p-4 space-y-3">
+            <input type="hidden" id="edit-compte-id" />
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Nom de la banque</label>
+                <input id="edit-compte-nom" required
+                    class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Solde (€)</label>
+                <input id="edit-compte-solde" type="number" step="0.01" required
+                    class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div class="flex gap-2 pt-1">
+                <button type="submit"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg py-2 transition">
+                    Enregistrer
+                </button>
+                <button type="button" onclick="supprimerCompteActuel()"
+                    title="Supprimer ce compte"
+                    class="px-3 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-950/40 transition">
+                    {{ icons.icon("trash", "14") }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ==================== SCRIPTS ==================== -->
 <script>
 
@@ -217,23 +245,51 @@ function filtrerMouvements() {
     });
 }
 
-async function ajusterSolde() {
-    const compteId = document.getElementById('ajust-compte-select').value;
-    const solde = document.getElementById('ajust-solde-input').value;
-    if (!compteId || !solde) return;
+function filtrerParCompte(compteId) {
+    window.location.href = '/comptes/?compte_id=' + compteId;
+}
+
+function ouvrirEditionCompte(btn) {
+    document.getElementById('edit-compte-id').value = btn.dataset.id;
+    document.getElementById('edit-compte-nom').value = btn.dataset.nom;
+    document.getElementById('edit-compte-solde').value = btn.dataset.solde;
+    document.getElementById('modal-edit-compte').classList.remove('hidden');
+}
+
+function fermerEditionCompte() {
+    document.getElementById('modal-edit-compte').classList.add('hidden');
+}
+
+async function enregistrerEditionCompte(event) {
+    event.preventDefault();
+    const id = document.getElementById('edit-compte-id').value;
     const formData = new FormData();
-    formData.append('solde', solde);
-    const res = await fetch(`/api/v1/comptes/${compteId}/solde`, {
-        method: 'PUT',
-        body: formData
-    });
+    formData.append('nom_banque', document.getElementById('edit-compte-nom').value);
+    formData.append('solde', document.getElementById('edit-compte-solde').value);
+    const res = await fetch(`/api/v1/comptes/${id}`, { method: 'PUT', body: formData });
     if (res.ok) {
-        document.getElementById('form-ajust-solde').reset();
         location.reload();
     } else {
-        alert('Erreur lors de la mise à jour du solde');
+        alert('Erreur lors de la mise à jour du compte');
+    }
+    return false;
+}
+
+async function supprimerCompteActuel() {
+    const id = document.getElementById('edit-compte-id').value;
+    const nom = document.getElementById('edit-compte-nom').value;
+    if (!confirm(`Supprimer le compte "${nom}" ? Ses mouvements et abonnements liés seront aussi supprimés.`)) return;
+    const res = await fetch(`/api/v1/comptes/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+        location.reload();
+    } else {
+        alert('Erreur lors de la suppression du compte');
     }
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fermerEditionCompte();
+});
 </script>
 
 {% endblock %}

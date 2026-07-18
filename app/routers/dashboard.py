@@ -9,9 +9,22 @@ from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
 from app.models.mouvement import TypeMouvement
-from app.services.assistant import generer_alertes
 
 router = APIRouter(tags=["Dashboard"])
+
+# Seuils de statut du "reste à vivre" mensuel
+SEUIL_FAIBLE = 50
+SEUIL_SURVEILLER = 150
+
+
+def _statut_reste_a_vivre(montant: float) -> dict:
+    if montant < SEUIL_FAIBLE:
+        return {"label": "Faible", "color": "red"}
+    if montant < SEUIL_SURVEILLER:
+        return {"label": "Surveiller", "color": "orange"}
+    return {"label": "Stable", "color": "emerald"}
+
+
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -57,10 +70,9 @@ def _build_dashboard_context(db: Session) -> dict:
             prochains.append(a)
     prochains.sort(key=lambda a: a.jours_restants)
 
-    alertes = generer_alertes(db)
-
     return {
         "comptes": comptes,
+        "abonnements": abonnements,
         "mouvements": mouvements,
         "total_liquidites": round(total_liquidites, 2),
         "total_epargne": round(total_epargne, 2),
@@ -69,8 +81,8 @@ def _build_dashboard_context(db: Session) -> dict:
         "revenus_mois": round(revenus_mois, 2),
         "charges_mensuelles": round(charges_mensuelles, 2),
         "reste_a_vivre": round(reste_a_vivre, 2),
+        "statut_reste_a_vivre": _statut_reste_a_vivre(reste_a_vivre),
         "prochains_prelevements": prochains,
-        "alertes": alertes,
     }
 
 

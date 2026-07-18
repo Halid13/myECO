@@ -30,45 +30,19 @@
     </div>
 </section>
 
-<!-- ==================== SECTION 2 : VUE BANCAIRE GLOBALE ==================== -->
-<section class="mb-6">
-    <div class="flex items-center gap-2 mb-3">
-        {{ icons.icon("landmark", "16", class="text-gray-500") }}
-        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Comptes bancaires</h2>
-    </div>
-    {% if comptes %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {% for compte in comptes %}
-        {{ components.bank_card_compact(compte) }}
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
-        <p class="text-xs text-gray-400">Aucun compte enregistré.</p>
-        <a href="/comptes/" class="inline-block mt-2 text-emerald-400 text-xs font-medium hover:underline">
-            Ajouter un compte →
-        </a>
-    </div>
-    {% endif %}
-</section>
-
-<!-- ==================== SECTION 3 : PROCHAINES ÉCHÉANCES ==================== -->
-<section class="mb-6">
-    {% call components.section_card("Prochaines échéances (7 jours)", "bell", "/abonnements/", "Gérer") %}
-    {% if prochains_prelevements %}
-    <div>
-        {% for a in prochains_prelevements %}
-        {{ components.echeance_row(a) }}
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-xs text-gray-600 py-2">Aucun prélèvement prévu dans les 7 prochains jours.</p>
-    {% endif %}
-    {% endcall %}
-</section>
-
-<!-- ==================== SECTION 4 : RÉPARTITION + RÉSUMÉ MENSUEL ==================== -->
+<!-- ==================== SECTION 2 : RÉSUMÉ MENSUEL + RÉPARTITION ==================== -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+    <!-- Résumé mensuel (3 KPI) -->
+    <div class="lg:col-span-2">
+        {% call components.section_card("Résumé mensuel", "chart-bar") %}
+        <div class="grid grid-cols-3 gap-3">
+            {{ components.kpi_mini("Revenus", revenus_mois, "€", "banknotes", "emerald") }}
+            {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "minus-circle", "red", "toggleModal('modal-depenses-fixes')") }}
+            {{ components.kpi_status("Reste à vivre", statut_reste_a_vivre, "shield-check") }}
+        </div>
+        {% endcall %}
+    </div>
 
     <!-- Répartition patrimoniale (Donut) -->
     <div class="lg:col-span-1">
@@ -93,18 +67,44 @@
         {% endcall %}
     </div>
 
-    <!-- Résumé mensuel (3 KPI) -->
-    <div class="lg:col-span-2">
-        {% call components.section_card("Résumé mensuel", "chart-bar") %}
-        <div class="grid grid-cols-3 gap-3">
-            {{ components.kpi_mini("Revenus", revenus_mois, "€", "banknotes", "emerald") }}
-            {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "minus-circle", "red") }}
-            {{ components.kpi_mini("Reste à vivre", reste_a_vivre, "€", "calculator", "blue") }}
-        </div>
-        {% endcall %}
-    </div>
-
 </div>
+
+<!-- ==================== SECTION 3 : PROCHAINES ÉCHÉANCES ==================== -->
+<section class="mb-6">
+    {% call components.section_card("Prochaines échéances (7 jours)", "bell", "/abonnements/", "Gérer") %}
+    {% if prochains_prelevements %}
+    <div>
+        {% for a in prochains_prelevements %}
+        {{ components.echeance_row(a) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-600 py-2">Aucun prélèvement prévu dans les 7 prochains jours.</p>
+    {% endif %}
+    {% endcall %}
+</section>
+
+<!-- ==================== SECTION 4 : VUE BANCAIRE GLOBALE ==================== -->
+<section class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        {{ icons.icon("landmark", "16", class="text-gray-500") }}
+        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Comptes bancaires</h2>
+    </div>
+    {% if comptes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {% for compte in comptes %}
+        {{ components.bank_card_compact(compte) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-400">Aucun compte enregistré.</p>
+        <a href="/comptes/" class="inline-block mt-2 text-emerald-400 text-xs font-medium hover:underline">
+            Ajouter un compte →
+        </a>
+    </div>
+    {% endif %}
+</section>
 
 <!-- ==================== SECTION 5 : ÉPARGNE & INVESTISSEMENTS ==================== -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -145,22 +145,7 @@
 
 </div>
 
-<!-- ==================== SECTION 6 : ALERTES ==================== -->
-{% if alertes %}
-<section class="mb-6">
-    <div class="flex items-center gap-2 mb-3">
-        {{ icons.icon("sparkles", "16", class="text-gray-500") }}
-        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Conseils & alertes</h2>
-    </div>
-    <div class="space-y-2">
-        {% for alerte in alertes %}
-        {{ components.alert_banner_compact(alerte) }}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-<!-- ==================== SECTION 7 : ACTIVITÉ RÉCENTE ==================== -->
+<!-- ==================== SECTION 6 : ACTIVITÉ RÉCENTE ==================== -->
 <section>
     {% call components.section_card("Derniers mouvements", "calendar", "/comptes/", "Historique complet") %}
     {% if mouvements %}
@@ -186,7 +171,45 @@
     {% endcall %}
 </section>
 
-<!-- ==================== SCRIPT CHART.JS ==================== -->
+<!-- ==================== MODAL : DÉPENSES FIXES ==================== -->
+<div id="modal-depenses-fixes" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) toggleModal('modal-depenses-fixes')">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 flex-shrink-0">
+            <div class="flex items-center gap-2">
+                {{ icons.icon("minus-circle", "18", class="text-red-400") }}
+                <h3 class="text-sm font-semibold text-white">Dépenses fixes</h3>
+            </div>
+            <button onclick="toggleModal('modal-depenses-fixes')" class="text-gray-500 hover:text-white transition">
+                {{ icons.icon("x-circle", "20") }}
+            </button>
+        </div>
+        <div class="overflow-y-auto">
+            {% if abonnements %}
+            <div class="divide-y divide-gray-800">
+                {% for a in abonnements|sort(attribute="montant", reverse=True) %}
+                <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div class="min-w-0">
+                        <p class="text-sm text-white font-medium truncate">{{ a.libelle }}</p>
+                        <p class="text-[11px] text-gray-500">{{ a.categorie or "Autre" }} · {{ a.frequence.value }}</p>
+                    </div>
+                    <span class="valeur text-sm font-bold text-red-400 flex-shrink-0">{{ "%.2f"|format(a.montant) }} €</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-500 text-center py-8">Aucun abonnement actif.</p>
+            {% endif %}
+        </div>
+        <div class="border-t border-gray-800 p-3 flex items-center justify-between flex-shrink-0">
+            <span class="text-xs text-gray-500">Total mensuel estimé</span>
+            <span class="valeur text-sm font-bold text-red-400">{{ "%.2f"|format(charges_mensuelles) }} €</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const patrimoineCtx = document.getElementById('patrimoineChart');
@@ -213,6 +236,16 @@ if (patrimoineCtx) {
         }
     });
 }
+
+function toggleModal(id) {
+    document.getElementById(id)?.classList.toggle('hidden');
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.getElementById('modal-depenses-fixes')?.classList.add('hidden');
+    }
+});
 </script>
 
 {% endblock %}

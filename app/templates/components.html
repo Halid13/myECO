@@ -3,19 +3,34 @@
 
 {# ===== INDICATEURS KPI ===== #}
 
-{# KPI Card compact #}
-{% macro kpi_mini(label, value, unit="€", icon_name=None, color="emerald") %}
-<div class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition">
-    {% if icon_name %}
-    {{ icons.icon(icon_name, "18", class="mb-2 " + ("text-emerald-400" if color == "emerald" else "text-blue-400" if color == "blue" else "text-purple-400" if color == "purple" else "text-yellow-400" if color == "yellow" else "text-red-400" if color == "red" else "text-gray-400")) }}
-    {% endif %}
+{# KPI Card compact — devient un <button> cliquable si `onclick` est fourni #}
+{% macro kpi_mini(label, value, unit="€", icon_name=None, color="emerald", onclick=None) %}
+{% set value_color = "text-emerald-400" if color == "emerald" else "text-blue-400" if color == "blue" else "text-purple-400" if color == "purple" else "text-yellow-400" if color == "yellow" else "text-red-400" if color == "red" else "text-gray-100" %}
+{% set hover_border = "hover:border-emerald-600/50" if color == "emerald" else "hover:border-blue-600/50" if color == "blue" else "hover:border-purple-600/50" if color == "purple" else "hover:border-yellow-600/50" if color == "yellow" else "hover:border-red-600/50" if color == "red" else "hover:border-gray-700" %}
+<{{ "button" if onclick else "div" }} {% if onclick %}type="button" onclick="{{ onclick }}"{% endif %}
+    class="w-full text-left bg-gray-900 border border-gray-800 rounded-lg p-4 transition {{ hover_border }} {% if onclick %}group cursor-pointer{% endif %}">
+    <div class="flex items-start justify-between">
+        {% if icon_name %}{{ icons.icon(icon_name, "18", class="mb-2 " + value_color) }}{% endif %}
+        {% if onclick %}{{ icons.icon("arrow-right", "12", class="text-gray-700 group-hover:" + value_color + " transition") }}{% endif %}
+    </div>
     <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">{{ label }}</p>
     <div class="flex items-baseline gap-1">
-        <p class="valeur text-xl font-bold {% if color == 'emerald' %}text-emerald-400{% elif color == 'blue' %}text-blue-400{% elif color == 'purple' %}text-purple-400{% elif color == 'yellow' %}text-yellow-400{% elif color == 'red' %}text-red-400{% else %}text-gray-100{% endif %}">
+        <p class="valeur text-xl font-bold {{ value_color }}">
             {{ "%.0f"|format(value) }}
         </p>
         <span class="text-xs text-gray-600">{{ unit }}</span>
     </div>
+</{{ "button" if onclick else "div" }}>
+{% endmacro %}
+
+{# KPI de statut (catégorie textuelle plutôt qu'un montant) #}
+{% macro kpi_status(label, status, icon_name=None) %}
+{% set color_class = "text-red-400" if status.color == "red" else "text-orange-400" if status.color == "orange" else "text-emerald-400" %}
+{% set border_class = "hover:border-red-600/40" if status.color == "red" else "hover:border-orange-600/40" if status.color == "orange" else "hover:border-emerald-600/40" %}
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-4 transition {{ border_class }}">
+    {% if icon_name %}{{ icons.icon(icon_name, "18", class="mb-2 " + color_class) }}{% endif %}
+    <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">{{ label }}</p>
+    <p class="text-xl font-bold {{ color_class }}">{{ status.label }}</p>
 </div>
 {% endmacro %}
 
@@ -44,6 +59,66 @@
 </a>
 {% endmacro %}
 
+{# ===== CARTE BANCAIRE RÉALISTE (page /comptes/) ===== #}
+{# Style visuel façon vraie carte de paiement — thème coloré déterministe par compte, distinct des autres #}
+
+{% macro bank_card_realistic(compte, active=False) %}
+{% set themes = [
+    ("from-emerald-700 via-emerald-900 to-gray-950", "text-emerald-200/70"),
+    ("from-indigo-600 via-indigo-900 to-gray-950", "text-indigo-200/70"),
+    ("from-amber-600 via-yellow-900 to-gray-950", "text-amber-100/70"),
+    ("from-violet-600 via-purple-900 to-gray-950", "text-violet-200/70"),
+    ("from-gray-600 via-gray-900 to-black", "text-gray-300/70"),
+    ("from-cyan-600 via-teal-900 to-gray-950", "text-cyan-200/70"),
+] %}
+{% set theme = themes[compte.id % themes|length] %}
+<div class="relative group cursor-pointer rounded-2xl p-5 bg-gradient-to-br {{ theme[0] }} border {% if active %}border-white/40 ring-2 ring-white/30{% else %}border-white/10{% endif %} shadow-xl overflow-hidden aspect-[1.6/1] flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+     onclick="filtrerParCompte({{ compte.id }})">
+
+    <!-- Décor abstrait -->
+    <div class="pointer-events-none absolute -right-8 -bottom-10 w-40 h-40 rounded-full bg-white/5"></div>
+    <div class="pointer-events-none absolute -right-2 -bottom-16 w-32 h-32 rounded-full bg-white/5"></div>
+
+    <!-- Bouton modifier -->
+    <button type="button"
+            onclick="event.stopPropagation(); ouvrirEditionCompte(this)"
+            data-id="{{ compte.id }}"
+            data-nom="{{ compte.nom_banque }}"
+            data-solde="{{ compte.solde }}"
+            title="Modifier ce compte"
+            class="absolute top-3 right-3 z-10 w-6 h-6 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition opacity-0 group-hover:opacity-100 focus:opacity-100">
+        {{ icons.icon("pencil", "12") }}
+    </button>
+
+    <!-- Haut : banque + puce -->
+    <div class="flex items-start justify-between relative z-[1] pr-6">
+        <p class="text-xs font-semibold uppercase tracking-widest {{ theme[1] }} truncate">{{ compte.nom_banque }}</p>
+        <div class="w-7 h-5 rounded-[4px] bg-gradient-to-br from-yellow-200/90 via-yellow-400/70 to-yellow-600/60 border border-yellow-100/30 flex-shrink-0"></div>
+    </div>
+
+    <!-- Milieu : numéro décoratif masqué -->
+    <p class="valeur text-sm tracking-[0.2em] text-white/50 relative z-[1]">•••• •••• •••• {{ "%04d"|format(compte.id) }}</p>
+
+    <!-- Bas : solde + statut + marque décorative -->
+    <div class="flex items-end justify-between relative z-[1] gap-2">
+        <div class="min-w-0">
+            <p class="valeur text-xl font-bold text-white truncate">{{ "%.2f"|format(compte.solde) }} €</p>
+            <p class="text-[10px] text-white/40 mt-0.5">MAJ {{ compte.date_maj.strftime("%d/%m/%y") }}</p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full
+                {% if compte.solde < 100 %}bg-red-400
+                {% elif compte.solde < 500 %}bg-orange-300
+                {% else %}bg-emerald-300{% endif %}"></span>
+            <div class="flex -space-x-2.5">
+                <span class="w-[18px] h-[18px] rounded-full bg-white/25"></span>
+                <span class="w-[18px] h-[18px] rounded-full bg-white/15"></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
 {# ===== SECTION CARD COMPACTE ===== #}
 
 {% macro section_card(title, icon_name=None, action_href=None, action_label=None) %}
@@ -62,28 +137,6 @@
     </div>
     {% endif %}
     {{ caller() }}
-</div>
-{% endmacro %}
-
-{# ===== ALERTES COMPACTES ===== #}
-
-{% macro alert_banner_compact(alerte) %}
-<div class="alert-banner-compact flex items-start gap-2 p-3 rounded-lg border backdrop-blur-sm {% if alerte.niveau == 'warning' %}bg-orange-950/30 border-orange-700 text-orange-300{% elif alerte.niveau == 'success' %}bg-emerald-950/30 border-emerald-700 text-emerald-300{% else %}bg-blue-950/30 border-blue-700 text-blue-300{% endif %}">
-    <span class="text-sm flex-shrink-0 mt-0.5">
-        {% if alerte.niveau == 'warning' %}
-            {{ icons.icon("exclamation-circle", "16") }}
-        {% elif alerte.niveau == 'success' %}
-            {{ icons.icon("check-circle", "16") }}
-        {% else %}
-            {{ icons.icon("info-circle", "16") }}
-        {% endif %}
-    </span>
-    <div class="flex-1 text-sm leading-relaxed">{{ alerte.message }}</div>
-    {% if alerte.lien %}
-    <a href="{{ alerte.lien }}" class="text-xs underline opacity-70 hover:opacity-100 flex-shrink-0 whitespace-nowrap font-medium">
-        Résoudre →
-    </a>
-    {% endif %}
 </div>
 {% endmacro %}
 

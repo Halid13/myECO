@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.services.assistant import generer_alertes
 
-router = APIRouter(prefix="/assistant", tags=["Assistant"])
+router = APIRouter(tags=["Assistant"])
 
 
 @router.get("/api/v1/assistant/alerts", summary="Récupérer les alertes et conseils")
