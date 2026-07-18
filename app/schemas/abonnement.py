@@ -1,4 +1,5 @@
 from pydantic import BaseModel, field_validator
+from datetime import datetime
 from app.models.abonnement import FrequenceAbonnement
 
 
@@ -9,6 +10,9 @@ class AbonnementBase(BaseModel):
     jour_prelevement: int
     id_compte: int
     actif: bool = True
+    categorie: str | None = None
+    date_debut: datetime | None = None
+    date_fin: datetime | None = None
 
     @field_validator("jour_prelevement")
     @classmethod
@@ -34,6 +38,8 @@ class AbonnementUpdate(BaseModel):
     montant: float | None = None
     jour_prelevement: int | None = None
     actif: bool | None = None
+    categorie: str | None = None
+    date_fin: datetime | None = None
 
 
 class AbonnementRead(AbonnementBase):

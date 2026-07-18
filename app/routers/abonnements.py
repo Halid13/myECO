@@ -1,10 +1,87 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from datetime import date
+import calendar
 from app.database import get_db
 from app.models.abonnement import Abonnement
+from app.models.compte import Compte
 from app.schemas.abonnement import AbonnementCreate, AbonnementUpdate, AbonnementRead
 
 router = APIRouter(tags=["Abonnements"])
+templates = Jinja2Templates(directory="app/templates")
+
+CATEGORIES = [
+    "Streaming", "Musique", "Sport & Bien-être", "Santé & Mutuelle",
+    "Assurances", "Énergie & Eau", "Téléphonie & Internet", "Logement",
+    "Transport", "Logiciels & Outils", "Alimentation", "Autre"
+]
+
+COEFF_MENSUEL = {
+    "Mensuelle": 1, "Trimestrielle": 1/3, "Semestrielle": 1/6, "Annuelle": 1/12
+}
+COEFF_ANNUEL = {
+    "Mensuelle": 12, "Trimestrielle": 4, "Semestrielle": 2, "Annuelle": 1
+}
+
+
+@router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
+def page_abonnements(request: Request, db: Session = Depends(get_db)):
+    abonnements = (
+        db.query(Abonnement)
+        .filter(Abonnement.actif == True)
+        .order_by(Abonnement.jour_prelevement)
+        .all()
+    )
+    today = date.today()
+    days_in_month = calendar.monthrange(today.year, today.month)[1]
+
+    total_mensuel = round(sum(
+        a.montant * COEFF_MENSUEL.get(a.frequence.value, 1)
+        for a in abonnements
+    ), 2)
+    total_annuel = round(sum(
+        a.montant * COEFF_ANNUEL.get(a.frequence.value, 12)
+        for a in abonnements
+    ), 2)
+
+    # Prochains 7 jours avec jours_restants
+    prochains = []
+    for a in abonnements:
+        j = a.jour_prelevement
+        jr = j - today.day if j >= today.day else days_in_month - today.day + j
+        if 0 <= jr <= 7:
+            a.jours_restants = jr
+            prochains.append(a)
+
+    # Répartition par catégorie
+    categories = {}
+    for a in abonnements:
+        cat = a.categorie or "Autre"
+        categories[cat] = round(
+            categories.get(cat, 0) + a.montant * COEFF_MENSUEL.get(a.frequence.value, 1), 2
+        )
+
+    # Timeline : abonnements par jour du mois
+    par_jour = {}
+    for a in abonnements:
+        j = a.jour_prelevement
+        par_jour.setdefault(j, []).append(a)
+
+    return templates.TemplateResponse("abonnements.html", {
+        "request": request,
+        "abonnements": abonnements,
+        "comptes_list": db.query(Compte).all(),
+        "prochains": prochains,
+        "total_mensuel": total_mensuel,
+        "total_annuel": total_annuel,
+        "nb_actifs": len(abonnements),
+        "categories": categories,
+        "par_jour": par_jour,
+        "today": today,
+        "categories_liste": CATEGORIES,
+        "days_in_month": days_in_month,
+    })
 
 
 @router.get("/api/v1/abonnements", response_model=list[AbonnementRead], summary="Lister les abonnements")
