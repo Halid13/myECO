@@ -2,8 +2,103 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-emerald-400 mb-6">Tableau de bord</h1>
 
-<!-- TODO : Module 1 — Dashboard complet -->
-<p class="text-gray-400">Dashboard en cours de construction…</p>
+<!-- En-tête -->
+<div class="flex items-center justify-between mb-8">
+    <h1 class="text-2xl font-bold text-emerald-400">Tableau de bord</h1>
+    <button onclick="toggleVisibilite()" class="text-xs text-gray-400 hover:text-white border border-gray-700 rounded px-3 py-1 transition">
+        👁 Masquer les montants
+    </button>
+</div>
+
+<!-- Cartes bancaires -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    {% for compte in comptes %}
+    <a href="/comptes/?compte_id={{ compte.id }}"
+       class="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-emerald-600 transition cursor-pointer block">
+        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">{{ compte.nom_banque }}</p>
+        <p class="valeur text-2xl font-bold text-white">{{ "%.2f"|format(compte.solde) }} €</p>
+        <p class="text-xs text-gray-600 mt-2">Mis à jour : {{ compte.date_maj.strftime("%d/%m/%Y") }}</p>
+    </a>
+    {% else %}
+    <p class="text-gray-600 col-span-3 text-sm">Aucun compte. <a href="/comptes/" class="text-emerald-400 underline">Ajouter un compte →</a></p>
+    {% endfor %}
+</div>
+
+<!-- Indicateurs financiers -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-xs text-gray-500 uppercase mb-1">Patrimoine total</p>
+        <p class="valeur text-xl font-bold text-emerald-400">{{ "%.2f"|format(total_patrimoine) }} €</p>
+    </div>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-xs text-gray-500 uppercase mb-1">Liquidités</p>
+        <p class="valeur text-xl font-bold text-blue-400">{{ "%.2f"|format(total_liquidites) }} €</p>
+    </div>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-xs text-gray-500 uppercase mb-1">Épargne</p>
+        <p class="valeur text-xl font-bold text-purple-400">{{ "%.2f"|format(total_epargne) }} €</p>
+    </div>
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
+        <p class="text-xs text-gray-500 uppercase mb-1">Investissements</p>
+        <p class="valeur text-xl font-bold text-yellow-400">{{ "%.2f"|format(total_investissements) }} €</p>
+    </div>
+</div>
+
+<!-- Résumé mensuel + Prochains prélèvements -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+    <!-- Résumé mensuel -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Résumé mensuel</h2>
+        <div class="flex justify-between items-center py-2 border-b border-gray-800">
+            <span class="text-gray-300 text-sm">Charges fixes mensuelles</span>
+            <span class="valeur text-red-400 font-semibold">- {{ "%.2f"|format(charges_mensuelles) }} €</span>
+        </div>
+    </div>
+
+    <!-- Prochains prélèvements -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Prochains prélèvements (7j)</h2>
+        {% if prochains_prelevements %}
+            {% for a in prochains_prelevements %}
+            <div class="flex justify-between items-center py-2 border-b border-gray-800 last:border-0">
+                <span class="text-gray-300 text-sm">{{ a.libelle }}</span>
+                <span class="valeur text-sm text-orange-400 font-medium">- {{ "%.2f"|format(a.montant) }} € <span class="text-gray-600">(le {{ a.jour_prelevement }})</span></span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-600 text-sm">Aucun prélèvement imminent.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Alertes de l'assistant -->
+{% if alertes %}
+<div class="mb-8 space-y-3">
+    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Conseils & Alertes</h2>
+    {% for alerte in alertes %}
+    <div class="flex items-start gap-3 rounded-xl px-4 py-3 border
+        {% if alerte.niveau == 'warning' %}bg-orange-950 border-orange-700 text-orange-300
+        {% elif alerte.niveau == 'success' %}bg-emerald-950 border-emerald-700 text-emerald-300
+        {% else %}bg-blue-950 border-blue-700 text-blue-300{% endif %}">
+        <span class="text-lg">{{ alerte.icone }}</span>
+        <div class="flex-1 text-sm">{{ alerte.message }}</div>
+        {% if alerte.lien %}
+        <a href="{{ alerte.lien }}" class="text-xs underline opacity-70 hover:opacity-100 whitespace-nowrap">Aller →</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script>
+function toggleVisibilite() {
+    document.querySelectorAll('.valeur').forEach(el => {
+        el.classList.toggle('blur-sm');
+    });
+}
+</script>
+
 {% endblock %}

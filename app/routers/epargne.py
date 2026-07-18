@@ -1,10 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
+from app.models.placement import Placement
 from app.schemas.epargne import ObjectifEpargneCreate, ObjectifEpargneRead, MouvementEpargne
 
 router = APIRouter(tags=["Épargne"])
+templates = Jinja2Templates(directory="app/templates")
+
+
+@router.get("/patrimoine/", summary="Page Patrimoine (Épargne & Investissements)")
+def page_patrimoine(request: Request, db: Session = Depends(get_db)):
+    objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
+    placements = db.query(Placement).all()
+    for obj in objectifs:
+        obj.progression_pct = round((obj.montant_actuel / obj.montant_cible) * 100, 1) if obj.montant_cible else 0.0
+    for p in placements:
+        p.plus_value = round(p.valeur_actuelle - p.capital_investi, 2)
+        p.performance_pct = round((p.plus_value / p.capital_investi) * 100, 2) if p.capital_investi else None
+    return templates.TemplateResponse("patrimoine.html", {
+        "request": request,
+        "objectifs": objectifs,
+        "placements": placements,
+    })
 
 
 @router.get("/api/v1/epargne", response_model=list[ObjectifEpargneRead], summary="Lister les objectifs d'épargne")

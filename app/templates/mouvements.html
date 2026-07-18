@@ -2,8 +2,176 @@
 {% block title %}Mouvements & Abonnements{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-emerald-400 mb-6">Mouvements & Abonnements</h1>
+<h1 class="text-2xl font-bold text-emerald-400 mb-8">Mouvements & Abonnements</h1>
 
-<!-- TODO : Module 2 & 3 -->
-<p class="text-gray-400">Module en cours de construction…</p>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    <!-- Colonne gauche : Formulaires -->
+    <div class="space-y-6">
+
+        <!-- Ajouter un compte -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Nouveau compte</h2>
+            <form hx-post="/api/v1/comptes" hx-target="#liste-comptes" hx-swap="outerHTML" class="space-y-3">
+                <input name="nom_banque" placeholder="Nom de la banque" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <input name="solde" type="number" step="0.01" placeholder="Solde initial (€)" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg py-2 transition">
+                    Ajouter
+                </button>
+            </form>
+        </div>
+
+        <!-- Ajouter un mouvement -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Enregistrer un flux</h2>
+            <form hx-post="/api/v1/mouvements" hx-target="#liste-mouvements" hx-swap="outerHTML" class="space-y-3">
+                <select name="id_compte" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="">— Sélectionner un compte —</option>
+                    {% for c in comptes %}
+                    <option value="{{ c.id }}">{{ c.nom_banque }}</option>
+                    {% endfor %}
+                </select>
+                <select name="type" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="Entrée">Entrée</option>
+                    <option value="Sortie">Sortie</option>
+                </select>
+                <input name="montant" type="number" step="0.01" min="0.01" placeholder="Montant (€)" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <input name="categorie" placeholder="Catégorie (ex: Salaire, Courses…)"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <input name="description" placeholder="Description (optionnelle)"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg py-2 transition">
+                    Enregistrer
+                </button>
+            </form>
+        </div>
+
+        <!-- Ajouter un abonnement -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Nouvel abonnement</h2>
+            <form hx-post="/api/v1/abonnements" hx-target="#liste-abonnements" hx-swap="outerHTML" class="space-y-3">
+                <input name="libelle" placeholder="Nom (ex: Netflix)" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <input name="montant" type="number" step="0.01" min="0.01" placeholder="Montant (€)" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                <div class="grid grid-cols-2 gap-3">
+                    <select name="frequence"
+                        class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="Mensuelle">Mensuelle</option>
+                        <option value="Annuelle">Annuelle</option>
+                    </select>
+                    <input name="jour_prelevement" type="number" min="1" max="31" placeholder="Jour (1-31)" required
+                        class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500" />
+                </div>
+                <select name="id_compte" required
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <option value="">— Compte associé —</option>
+                    {% for c in comptes %}
+                    <option value="{{ c.id }}">{{ c.nom_banque }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg py-2 transition">
+                    Ajouter l'abonnement
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Colonne droite : Tableaux -->
+    <div class="lg:col-span-2 space-y-6">
+
+        <!-- Soldes des comptes -->
+        <div id="liste-comptes" class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Soldes des comptes</h2>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-500 text-left border-b border-gray-800">
+                        <th class="pb-2">Banque</th>
+                        <th class="pb-2 text-right">Solde</th>
+                        <th class="pb-2 text-right">Dernière MAJ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in comptes %}
+                    <tr class="border-b border-gray-800 last:border-0">
+                        <td class="py-2 text-white font-medium">{{ c.nom_banque }}</td>
+                        <td class="py-2 text-right font-bold {% if c.solde < 100 %}text-red-400{% else %}text-emerald-400{% endif %}">
+                            {{ "%.2f"|format(c.solde) }} €
+                        </td>
+                        <td class="py-2 text-right text-gray-500">{{ c.date_maj.strftime("%d/%m/%Y") }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="py-4 text-gray-600 text-center">Aucun compte enregistré.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Historique des mouvements -->
+        <div id="liste-mouvements" class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Derniers mouvements</h2>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-500 text-left border-b border-gray-800">
+                        <th class="pb-2">Date</th>
+                        <th class="pb-2">Compte</th>
+                        <th class="pb-2">Catégorie</th>
+                        <th class="pb-2">Description</th>
+                        <th class="pb-2 text-right">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in mouvements %}
+                    <tr class="border-b border-gray-800 last:border-0">
+                        <td class="py-2 text-gray-500">{{ m.date_mouvement.strftime("%d/%m") }}</td>
+                        <td class="py-2 text-gray-300">{{ m.compte.nom_banque }}</td>
+                        <td class="py-2 text-gray-400">{{ m.categorie or "—" }}</td>
+                        <td class="py-2 text-gray-400 truncate max-w-[150px]">{{ m.description or "—" }}</td>
+                        <td class="py-2 text-right font-semibold {% if m.type.value == 'Entrée' %}text-emerald-400{% else %}text-red-400{% endif %}">
+                            {% if m.type.value == 'Entrée' %}+{% else %}-{% endif %}{{ "%.2f"|format(m.montant) }} €
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="py-4 text-gray-600 text-center">Aucun mouvement enregistré.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Abonnements actifs -->
+        <div id="liste-abonnements" class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Abonnements actifs</h2>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-gray-500 text-left border-b border-gray-800">
+                        <th class="pb-2">Libellé</th>
+                        <th class="pb-2">Fréquence</th>
+                        <th class="pb-2">Jour</th>
+                        <th class="pb-2 text-right">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in abonnements %}
+                    <tr class="border-b border-gray-800 last:border-0">
+                        <td class="py-2 text-white font-medium">{{ a.libelle }}</td>
+                        <td class="py-2 text-gray-400">{{ a.frequence.value }}</td>
+                        <td class="py-2 text-gray-400">Le {{ a.jour_prelevement }}</td>
+                        <td class="py-2 text-right text-orange-400 font-semibold">- {{ "%.2f"|format(a.montant) }} €</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="py-4 text-gray-600 text-center">Aucun abonnement enregistré.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
 {% endblock %}
