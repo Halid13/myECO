@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -40,8 +40,12 @@ def lister_comptes(db: Session = Depends(get_db)):
 
 
 @router.post("/api/v1/comptes", response_model=CompteRead, status_code=201, summary="Créer un compte")
-def creer_compte(payload: CompteCreate, db: Session = Depends(get_db)):
-    compte = Compte(**payload.model_dump())
+def creer_compte(
+    nom_banque: str = Form(...),
+    solde: float = Form(0.0),
+    db: Session = Depends(get_db)
+):
+    compte = Compte(nom_banque=nom_banque, solde=solde, date_maj=datetime.now(timezone.utc))
     db.add(compte)
     db.commit()
     db.refresh(compte)
@@ -80,13 +84,25 @@ def lister_mouvements(compte_id: int | None = None, db: Session = Depends(get_db
 
 
 @router.post("/api/v1/mouvements", response_model=MouvementRead, status_code=201, summary="Enregistrer un mouvement")
-def creer_mouvement(payload: MouvementCreate, db: Session = Depends(get_db)):
-    compte = db.get(Compte, payload.id_compte)
+def creer_mouvement(
+    id_compte: int = Form(...),
+    type: str = Form(...),
+    montant: float = Form(...),
+    categorie: str = Form(None),
+    description: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    compte = db.get(Compte, id_compte)
     if not compte:
         raise HTTPException(status_code=404, detail="Compte introuvable")
-    mouvement = Mouvement(**payload.model_dump())
-    if mouvement.date_mouvement is None:
-        mouvement.date_mouvement = datetime.now(timezone.utc)
+    mouvement = Mouvement(
+        id_compte=id_compte,
+        type=type,
+        montant=montant,
+        categorie=categorie,
+        description=description,
+        date_mouvement=datetime.now(timezone.utc)
+    )
     # Mise à jour du solde du compte
     if mouvement.type.value == "Entrée":
         compte.solde += mouvement.montant
