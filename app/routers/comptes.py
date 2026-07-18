@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement
+from app.models.abonnement import Abonnement
 from app.schemas.compte import CompteCreate, CompteRead, CompteUpdate
 from app.schemas.mouvement import MouvementCreate, MouvementRead
 
@@ -13,13 +14,21 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/comptes/", summary="Page Mouvements & Comptes")
-def page_comptes(request: Request, db: Session = Depends(get_db)):
+def page_comptes(request: Request, compte_id: int | None = None, db: Session = Depends(get_db)):
     comptes = db.query(Compte).all()
-    mouvements = db.query(Mouvement).order_by(Mouvement.date_mouvement.desc()).limit(50).all()
+    q = db.query(Mouvement)
+    if compte_id:
+        q = q.filter(Mouvement.id_compte == compte_id)
+    mouvements = q.order_by(Mouvement.date_mouvement.desc()).limit(100).all()
+    abonnements = db.query(Abonnement).filter(Abonnement.actif == True).order_by(Abonnement.jour_prelevement).all()
+    total_liquidites = sum(c.solde for c in comptes)
     return templates.TemplateResponse("mouvements.html", {
         "request": request,
         "comptes": comptes,
         "mouvements": mouvements,
+        "abonnements": abonnements,
+        "total_liquidites": round(total_liquidites, 2),
+        "filtre_compte_id": compte_id,
     })
 
 

@@ -90,9 +90,9 @@
     <div class="lg:col-span-2">
         {% call components.section_card("Résumé mensuel", "chart-bar") %}
         <div class="grid grid-cols-3 gap-3">
-            {{ components.kpi_mini("Revenus", 0, "€", "trending-up", "emerald") }}
-            {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "tag", "red") }}
-            {{ components.kpi_mini("Reste à vivre", 0, "€", "wallet", "blue") }}
+            {{ components.kpi_mini("Revenus", 0, "€", "banknotes", "emerald") }}
+            {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "minus-circle", "red") }}
+            {{ components.kpi_mini("Reste à vivre", 0, "€", "calculator", "blue") }}
         </div>
         <div class="border-t border-gray-800 mt-3 pt-3">
             <p class="text-xs text-gray-500 flex items-center gap-2">
@@ -125,7 +125,7 @@
 
     <!-- Objectifs épargne -->
     <div>
-        {% call components.section_card("Objectifs d'épargne", "target") %}
+        {% call components.section_card("Objectifs d'épargne", "flag") %}
         <div class="space-y-2">
             {% if total_epargne > 0 %}
             <div class="flex justify-between items-center text-sm mb-2">
