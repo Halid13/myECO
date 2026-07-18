@@ -106,7 +106,7 @@ def creer_abonnement(
     db.add(abonnement)
     db.commit()
     db.refresh(abonnement)
-    return {"status": "redirect", "location": "/abonnements/"}
+    return abonnement
 
 
 @router.get("/api/v1/abonnements", response_model=list[AbonnementRead], summary="Lister les abonnements")
@@ -129,11 +129,10 @@ def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Sessi
     return abonnement
 
 
-@router.delete("/api/v1/abonnements/{abonnement_id}", status_code=200, summary="Supprimer un abonnement")
+@router.delete("/api/v1/abonnements/{abonnement_id}", status_code=204, summary="Supprimer un abonnement")
 def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db)):
     abonnement = db.get(Abonnement, abonnement_id)
     if not abonnement:
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
     db.delete(abonnement)
     db.commit()
-    return {"status": "redirect", "location": "/abonnements/"}

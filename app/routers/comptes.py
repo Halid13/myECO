@@ -53,11 +53,15 @@ def creer_compte(
 
 
 @router.put("/api/v1/comptes/{compte_id}/solde", response_model=CompteRead, summary="Ajuster le solde")
-def ajuster_solde(compte_id: int, payload: CompteUpdate, db: Session = Depends(get_db)):
+def ajuster_solde(
+    compte_id: int,
+    solde: float = Form(...),
+    db: Session = Depends(get_db)
+):
     compte = db.get(Compte, compte_id)
     if not compte:
         raise HTTPException(status_code=404, detail="Compte introuvable")
-    compte.solde = payload.solde
+    compte.solde = solde
     compte.date_maj = datetime.now(timezone.utc)
     db.commit()
     db.refresh(compte)
