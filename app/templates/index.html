@@ -15,7 +15,7 @@
         <button id="toggle-discretion" 
                 onclick="toggleDiscretion()" 
                 class="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs rounded-lg transition">
-            <span id="icone-discretion">{{ components.icons.icon("eye", "16") }}</span>
+            <span id="icone-discretion">{{ icons.icon("eye", "16") }}</span>
             <span id="texte-discretion">Mode discrétion</span>
         </button>
     </div>
@@ -242,14 +242,12 @@ function toggleDiscretion() {
     if (isDiscret) {
         valeurs.forEach(el => el.classList.remove('blur-sm', 'select-none'));
         localStorage.removeItem(DISCRETION_KEY);
-        document.getElementById('icone-discretion').innerHTML = '{{ components.icons.icon("eye", "16") }}';
         document.getElementById('texte-discretion').textContent = 'Mode discrétion';
     } else {
         valeurs.forEach(el => {
             el.classList.add('blur-sm', 'select-none');
         });
         localStorage.setItem(DISCRETION_KEY, 'true');
-        document.getElementById('icone-discretion').innerHTML = '{{ components.icons.icon("eye-slash", "16") }}';
         document.getElementById('texte-discretion').textContent = 'Mode visible';
     }
 }
