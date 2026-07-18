@@ -4,23 +4,13 @@ from datetime import date
 from collections import defaultdict
 from sqlalchemy.orm import Session
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
-
-MOIS_FR_COURT = [
-    "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
-    "Juil", "Août", "Sep", "Oct", "Nov", "Déc",
-]
-
-
-def _mois_precedent(annee: int, mois: int) -> tuple[int, int]:
-    if mois == 1:
-        return annee - 1, 12
-    return annee, mois - 1
+from app.services.finances import mois_precedent, evolution_cumulee
 
 
 def effort_epargne_mois(db: Session, today: date | None = None) -> dict:
     """Total épargné (dépôts positifs) ce mois-ci et le mois précédent, tous objectifs confondus."""
     today = today or date.today()
-    annee_prec, mois_prec = _mois_precedent(today.year, today.month)
+    annee_prec, mois_prec = mois_precedent(today.year, today.month)
 
     depots = db.query(HistoriqueEpargne).filter(HistoriqueEpargne.montant > 0).all()
 
@@ -82,31 +72,5 @@ def evolution_epargne(db: Session, nb_mois: int = 6, today: date | None = None) 
     """Montant total épargné (cumulé, net) à la fin de chaque mois, sur les N derniers mois —
     approxime la trajectoire de croissance de l'épargne totale."""
     today = today or date.today()
-
-    mois_cibles = []
-    annee, mois = today.year, today.month
-    for _ in range(nb_mois):
-        mois_cibles.append((annee, mois))
-        annee, mois = _mois_precedent(annee, mois)
-    mois_cibles.reverse()
-
     mouvements = db.query(HistoriqueEpargne).order_by(HistoriqueEpargne.date_operation).all()
-    if not mouvements:
-        return []
-
-    premiere_annee, premier_mois = mois_cibles[0]
-    cumul = sum(
-        m.montant for m in mouvements
-        if (m.date_operation.year, m.date_operation.month) < (premiere_annee, premier_mois)
-    )
-
-    totaux_par_mois = defaultdict(float)
-    for m in mouvements:
-        cle = (m.date_operation.year, m.date_operation.month)
-        totaux_par_mois[cle] += m.montant
-
-    resultat = []
-    for annee, mois in mois_cibles:
-        cumul += totaux_par_mois.get((annee, mois), 0.0)
-        resultat.append({"label": MOIS_FR_COURT[mois - 1], "total": round(cumul, 2)})
-    return resultat
+    return evolution_cumulee(mouvements, nb_mois, today)

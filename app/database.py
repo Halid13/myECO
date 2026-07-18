@@ -36,6 +36,10 @@ def _appliquer_migrations_legeres():
     inspector = inspect(engine)
     colonnes_attendues = {
         "objectif_epargne": [("id_compte", "INTEGER REFERENCES compte(id)")],
+        "placement": [
+            ("date_investissement", "DATETIME"),
+            ("description", "TEXT"),
+        ],
     }
     with engine.begin() as conn:
         for table, colonnes in colonnes_attendues.items():

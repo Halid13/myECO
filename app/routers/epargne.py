@@ -4,7 +4,6 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
-from app.models.placement import Placement
 from app.models.compte import Compte
 from app.schemas.epargne import ObjectifEpargneRead
 from app.services.finances import calculer_revenus_mois, CHART_COLORS
@@ -14,6 +13,7 @@ from app.services.epargne import (
     estimation_mois_restants,
     evolution_epargne,
 )
+from app.routers.investissements import build_investissements_context
 
 router = APIRouter(tags=["Épargne"])
 templates = Jinja2Templates(directory="app/templates")
@@ -23,7 +23,6 @@ templates = Jinja2Templates(directory="app/templates")
 def page_patrimoine(request: Request, db: Session = Depends(get_db)):
     today = date.today()
     objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
-    placements = db.query(Placement).all()
     comptes = db.query(Compte).all()
 
     for obj in objectifs:
@@ -32,10 +31,6 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         obj.derniers_mouvements = sorted(
             obj.historique, key=lambda h: h.date_operation, reverse=True
         )[:3]
-
-    for p in placements:
-        p.plus_value = round(p.valeur_actuelle - p.capital_investi, 2)
-        p.performance_pct = round((p.plus_value / p.capital_investi) * 100, 2) if p.capital_investi else None
 
     total_epargne = round(sum(o.montant_actuel for o in objectifs), 2)
     effort = effort_epargne_mois(db, today)
@@ -47,10 +42,9 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         reverse=True,
     )[:3]
 
-    return templates.TemplateResponse("patrimoine.html", {
+    context = {
         "request": request,
         "objectifs": objectifs,
-        "placements": placements,
         "comptes": comptes,
         "total_epargne": total_epargne,
         "effort_mois": effort["mois"],
@@ -61,7 +55,9 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         "evolution": evolution_epargne(db, today=today),
         "top_proches": top_proches,
         "chart_colors": CHART_COLORS,
-    })
+    }
+    context.update(build_investissements_context(db, today))
+    return templates.TemplateResponse("patrimoine.html", context)
 
 
 @router.get("/api/v1/epargne", response_model=list[ObjectifEpargneRead], summary="Lister les objectifs d'épargne")

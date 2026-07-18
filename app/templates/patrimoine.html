@@ -126,89 +126,125 @@
 
 </div>
 
-<!-- ==================== INVESTISSEMENTS (inchangé) ==================== -->
-<div class="flex items-center gap-2 mb-3">
-    {{ icons.icon("chart-bar", "16", class="text-gray-500") }}
-    <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Investissements</h2>
+<!-- ==================== INVESTISSEMENTS : BANDEAU KPI ==================== -->
+<div class="flex items-center justify-between mb-3 mt-2">
+    <div class="flex items-center gap-2">
+        {{ icons.icon("chart-bar", "16", class="text-gray-500") }}
+        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Investissements</h2>
+    </div>
+    <button onclick="document.getElementById('modal-nouveau-placement').classList.remove('hidden')"
+            title="Nouveau placement"
+            class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-900 border border-gray-800 text-gray-400 hover:text-yellow-400 hover:border-yellow-600/50 transition">
+        {{ icons.icon("plus", "15") }}
+    </button>
 </div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-    <div>
-        {% call components.section_card("Nouveau placement", "chart-bar") %}
-            <form hx-post="/api/v1/investissements" hx-target="#liste-placements" hx-swap="outerHTML" class="space-y-2">
-                <input name="nom_support" placeholder="Nom (ex: PEA Bourso)" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
-                <select name="type_actif" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
-                    <option value="Actions">Actions</option>
-                    <option value="Crypto">Crypto</option>
-                    <option value="Immobilier">Immobilier</option>
-                    <option value="Obligations">Obligations</option>
-                    <option value="PEE/PER">PEE / PER</option>
-                    <option value="Autre">Autre</option>
-                </select>
-                <input name="capital_investi" type="number" step="0.01" min="0" placeholder="Capital investi (€)" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
-                <input name="valeur_actuelle" type="number" step="0.01" min="0" placeholder="Valeur actuelle (€)" required
-                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
-                <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-sm font-medium rounded-lg py-2 transition flex items-center justify-center gap-2">
-                    {{ icons.icon("plus", "16") }} Ajouter le placement
-                </button>
-            </form>
-        {% endcall %}
-    </div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
 
-    <div class="lg:col-span-2">
-        <div id="liste-placements" class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-            <div class="flex items-center gap-2 p-4 pb-3">
-                {{ icons.icon("chart-bar", "18") }}
-                <h2 class="text-xs font-semibold text-gray-300 uppercase tracking-widest">Portefeuille d'investissements</h2>
-            </div>
-            <table class="w-full text-xs">
-                <thead>
-                    <tr class="border-b border-gray-800 bg-gray-950/50">
-                        <th class="text-left py-2 px-4 text-gray-500 font-medium">Support</th>
-                        <th class="text-left py-2 px-4 text-gray-500 font-medium hidden md:table-cell">Type</th>
-                        <th class="text-right py-2 px-4 text-gray-500 font-medium">Capital</th>
-                        <th class="text-right py-2 px-4 text-gray-500 font-medium">Valeur</th>
-                        <th class="text-right py-2 px-4 text-gray-500 font-medium">Perf.</th>
-                        <th class="py-2 px-4"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-800">
-                    {% for p in placements %}
-                    <tr class="hover:bg-gray-800/50 transition">
-                        <td class="py-2 px-4 text-white font-medium">{{ p.nom_support }}</td>
-                        <td class="py-2 px-4 text-gray-400 hidden md:table-cell">{{ p.type_actif }}</td>
-                        <td class="py-2 px-4 text-right text-gray-300">{{ "%.2f"|format(p.capital_investi) }} €</td>
-                        <td class="py-2 px-4 text-right valeur text-yellow-400 font-semibold">{{ "%.2f"|format(p.valeur_actuelle) }} €</td>
-                        <td class="py-2 px-4 text-right font-bold {% if p.plus_value >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-                            {% if p.performance_pct is not none %}
-                                {% if p.plus_value >= 0 %}+{% endif %}{{ p.performance_pct }}%
-                            {% else %}—{% endif %}
-                        </td>
-                        <td class="py-2 px-4 text-right">
-                            <form hx-put="/api/v1/investissements/{{ p.id }}/value"
-                                  hx-target="#liste-placements" hx-swap="outerHTML"
-                                  class="flex gap-1 justify-end">
-                                <input name="valeur_actuelle" type="number" step="0.01" min="0"
-                                    placeholder="Nouvelle valeur"
-                                    class="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
-                                <button type="submit"
-                                    class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-medium rounded px-2 py-1 transition">
-                                    MAJ
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" class="py-8 text-gray-600 text-center text-sm">Aucun placement déclaré.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    {{ components.kpi_mini("Valeur du portefeuille", portefeuille_valeur, "€", "chart-bar", "yellow") }}
+    {{ components.kpi_mini("Total investi", portefeuille_capital, "€", "banknotes", "blue") }}
+
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        {{ icons.icon("trending-up" if portefeuille_plus_value >= 0 else "trending-down", "18", class="mb-2 " + ("text-emerald-400" if portefeuille_plus_value > 0 else "text-red-400" if portefeuille_plus_value < 0 else "text-gray-400")) }}
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Performance globale</p>
+        <div class="flex items-baseline gap-1">
+            <p class="valeur text-xl font-bold {% if portefeuille_plus_value > 0 %}text-emerald-400{% elif portefeuille_plus_value < 0 %}text-red-400{% else %}text-gray-300{% endif %}">
+                {% if portefeuille_plus_value > 0 %}+{% endif %}{{ "%.0f"|format(portefeuille_plus_value) }}
+            </p>
+            <span class="text-xs text-gray-600">€</span>
         </div>
+        <p class="text-[11px] mt-1 {% if portefeuille_plus_value > 0 %}text-emerald-500{% elif portefeuille_plus_value < 0 %}text-red-500{% else %}text-gray-600{% endif %}">
+            {% if portefeuille_plus_value > 0 %}+{% endif %}{{ portefeuille_performance_pct }}%
+        </p>
     </div>
 
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        {{ icons.icon("banknotes", "18", class="mb-2 text-yellow-400") }}
+        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Versé ce mois</p>
+        <div class="flex items-baseline gap-2 flex-wrap">
+            <p class="valeur text-xl font-bold text-yellow-400">{{ "%.0f"|format(investi_mois) }} €</p>
+            {% if delta_investi_pct != 0 %}
+            <span class="text-[11px] font-semibold flex items-center gap-0.5 {% if delta_investi_pct >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+                {% if delta_investi_pct >= 0 %}{{ icons.icon("arrow-up-right", "10") }}+{{ delta_investi_pct }}%
+                {% else %}{{ icons.icon("arrow-down-left", "10") }}{{ delta_investi_pct }}%{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        <p class="text-[11px] text-gray-600 mt-1">vs {{ "%.0f"|format(investi_mois_precedent) }} € le mois dernier</p>
+    </div>
+
+</div>
+
+<!-- ==================== INVESTISSEMENTS : VISUALISATIONS ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+
+    {% call components.section_card("Répartition par type d'actif", "chart-pie") %}
+        {% if repartition_investissements %}
+        <div style="max-height: 160px;">
+            <canvas id="repartitionInvestChart"></canvas>
+        </div>
+        <div class="mt-4 space-y-1.5">
+            {% for type, valeur in repartition_investissements.items() %}
+            <div class="flex justify-between items-center text-xs gap-2">
+                <span class="flex items-center gap-2 min-w-0 flex-1">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ type_colors.get(type, '#6b7280') }};"></span>
+                    <span class="text-gray-400 truncate">{{ type }}</span>
+                </span>
+                <span class="valeur text-gray-200 font-semibold flex-shrink-0">{{ "%.0f"|format(valeur) }} €</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-500 py-8 text-center">Aucun placement pour l'instant.</p>
+        {% endif %}
+    {% endcall %}
+
+    {% call components.section_card("Évolution du portefeuille (6 mois)", "chart-bar") %}
+        {% if evolution_investissements %}
+        <div style="max-height: 180px;">
+            <canvas id="evolutionInvestChart"></canvas>
+        </div>
+        {% else %}
+        <p class="text-xs text-gray-500 py-8 text-center">Pas encore assez d'historique pour une tendance.</p>
+        {% endif %}
+    {% endcall %}
+
+</div>
+
+<!-- ==================== INVESTISSEMENTS : TABLEAU DU PORTEFEUILLE ==================== -->
+<div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden mb-6">
+    <div class="flex items-center gap-2 p-4 pb-3">
+        {{ icons.icon("chart-bar", "18") }}
+        <h2 class="text-xs font-semibold text-gray-300 uppercase tracking-widest">Portefeuille d'investissements</h2>
+    </div>
+    {% if placements %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+            <thead>
+                <tr class="border-b border-gray-800 bg-gray-950/50">
+                    <th class="text-left py-2 px-4 text-gray-500 font-medium">Support</th>
+                    <th class="text-left py-2 px-4 text-gray-500 font-medium hidden md:table-cell">Type</th>
+                    <th class="text-right py-2 px-4 text-gray-500 font-medium">Investi</th>
+                    <th class="text-right py-2 px-4 text-gray-500 font-medium">Valeur</th>
+                    <th class="text-right py-2 px-4 text-gray-500 font-medium">Gain / Perte</th>
+                    <th class="text-left py-2 px-4 text-gray-500 font-medium hidden lg:table-cell">MAJ</th>
+                    <th class="py-2 px-4"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for p in placements %}
+                {{ components.placement_row(p, type_colors) }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="py-12 text-center">
+        {{ icons.icon("chart-bar", "32", class="mx-auto mb-3 text-gray-700") }}
+        <p class="text-sm text-gray-500">Aucun placement déclaré.</p>
+        <p class="text-xs text-gray-600 mt-1">Cliquez sur "+" pour ajouter votre premier investissement.</p>
+    </div>
+    {% endif %}
 </div>
 
 <!-- ==================== MODAL : NOUVEL OBJECTIF D'ÉPARGNE ==================== -->
@@ -246,6 +282,107 @@
                 {{ icons.icon("plus", "16") }} Créer l'objectif
             </button>
         </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL : NOUVEAU PLACEMENT ==================== -->
+<div id="modal-nouveau-placement" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerNouveauPlacement()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 bg-gray-950">
+            <div class="flex items-center gap-2">
+                {{ icons.icon("chart-bar", "16", class="text-yellow-400") }}
+                <h3 class="text-sm font-semibold text-white">Nouveau placement</h3>
+            </div>
+            <button type="button" onclick="fermerNouveauPlacement()" class="text-gray-500 hover:text-white transition">
+                {{ icons.icon("x-circle", "20") }}
+            </button>
+        </div>
+        <form onsubmit="return creerPlacement(event)" class="p-4 space-y-3">
+            <input name="nom_support" placeholder="Nom (ex: ETF World, PEA Bourso…)" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+            <select name="type_actif" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
+                {% for t in types_actifs %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+            </select>
+            <input name="capital_investi" type="number" step="0.01" min="0" placeholder="Capital investi (€)" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+            <input name="valeur_actuelle" type="number" step="0.01" min="0" placeholder="Valeur actuelle (€)" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Date d'investissement</label>
+                <input name="date_investissement" type="date"
+                    class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500" />
+            </div>
+            <textarea name="description" rows="2" placeholder="Description (optionnelle)"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 resize-none"></textarea>
+            <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-sm font-medium rounded-lg py-2 transition flex items-center justify-center gap-2">
+                {{ icons.icon("plus", "16") }} Ajouter le placement
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL : GÉRER UN PLACEMENT ==================== -->
+<div id="modal-gerer-placement" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerGestionPlacement()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 bg-gray-950">
+            <div class="flex items-center gap-2">
+                {{ icons.icon("chart-bar", "16", class="text-yellow-400") }}
+                <h3 class="text-sm font-semibold text-white">Gérer le placement</h3>
+            </div>
+            <button type="button" onclick="fermerGestionPlacement()" class="text-gray-500 hover:text-white transition">
+                {{ icons.icon("x-circle", "20") }}
+            </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+            <input type="hidden" id="gp-id" />
+
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Valeur actuelle (€)</label>
+                <div class="flex gap-2 mt-1">
+                    <input id="gp-valeur" type="number" step="0.01" min="0"
+                        class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500" />
+                    <button type="button" onclick="majValeurPlacement()"
+                        class="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-medium rounded-lg px-3 transition flex-shrink-0">MAJ</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Ajouter un versement (€)</label>
+                <div class="flex gap-2 mt-1">
+                    <input id="gp-versement" type="number" step="0.01" min="0.01" placeholder="Ex: 200"
+                        class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+                    <button type="button" onclick="ajouterVersementPlacement()"
+                        class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg px-3 transition flex-shrink-0">Verser</button>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-3 space-y-2">
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Informations</label>
+                <input id="gp-nom" placeholder="Nom du support"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500" />
+                <select id="gp-type"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
+                    {% for t in types_actifs %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+                </select>
+                <textarea id="gp-description" rows="2" placeholder="Description (optionnelle)"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500 resize-none"></textarea>
+                <button type="button" onclick="enregistrerMetadonneesPlacement()"
+                    class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-lg py-2 transition">
+                    Enregistrer les infos
+                </button>
+            </div>
+
+            <button type="button" onclick="supprimerPlacementActuel()"
+                class="w-full flex items-center justify-center gap-2 text-red-400 hover:bg-red-950/40 border border-red-900/50 text-sm font-medium rounded-lg py-2 transition">
+                {{ icons.icon("trash", "14") }} Supprimer ce placement
+            </button>
+        </div>
     </div>
 </div>
 
@@ -307,8 +444,111 @@ async function cloturerObjectif(btn) {
     }
 }
 
+// ===== INVESTISSEMENTS =====
+
+function fermerNouveauPlacement() {
+    document.getElementById('modal-nouveau-placement').classList.add('hidden');
+}
+
+async function creerPlacement(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    if (!formData.get('date_investissement')) formData.delete('date_investissement');
+    if (!formData.get('description')) formData.delete('description');
+
+    const res = await fetch('/api/v1/investissements', { method: 'POST', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la création du placement");
+    }
+    return false;
+}
+
+function ouvrirGestionPlacement(btn) {
+    document.getElementById('gp-id').value = btn.dataset.id;
+    document.getElementById('gp-valeur').value = btn.dataset.valeur;
+    document.getElementById('gp-versement').value = '';
+    document.getElementById('gp-nom').value = btn.dataset.nom;
+    document.getElementById('gp-type').value = btn.dataset.type;
+    document.getElementById('gp-description').value = btn.dataset.description;
+    document.getElementById('modal-gerer-placement').classList.remove('hidden');
+}
+
+function fermerGestionPlacement() {
+    document.getElementById('modal-gerer-placement').classList.add('hidden');
+}
+
+async function majValeurPlacement() {
+    const id = document.getElementById('gp-id').value;
+    const valeur = document.getElementById('gp-valeur').value;
+    if (valeur === '' || parseFloat(valeur) < 0) {
+        alert('Indiquez une valeur valide.');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('valeur_actuelle', valeur);
+    const res = await fetch(`/api/v1/investissements/${id}/value`, { method: 'PUT', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la mise à jour de la valeur");
+    }
+}
+
+async function ajouterVersementPlacement() {
+    const id = document.getElementById('gp-id').value;
+    const montant = document.getElementById('gp-versement').value;
+    if (!montant || parseFloat(montant) <= 0) {
+        alert('Indiquez un montant de versement supérieur à 0.');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('montant', montant);
+    const res = await fetch(`/api/v1/investissements/${id}/versement`, { method: 'PUT', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors du versement");
+    }
+}
+
+async function enregistrerMetadonneesPlacement() {
+    const id = document.getElementById('gp-id').value;
+    const formData = new FormData();
+    formData.append('nom_support', document.getElementById('gp-nom').value);
+    formData.append('type_actif', document.getElementById('gp-type').value);
+    formData.append('description', document.getElementById('gp-description').value);
+    const res = await fetch(`/api/v1/investissements/${id}`, { method: 'PUT', body: formData });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la mise à jour des informations");
+    }
+}
+
+async function supprimerPlacementActuel() {
+    const id = document.getElementById('gp-id').value;
+    const nom = document.getElementById('gp-nom').value;
+    if (!confirm(`Supprimer le placement "${nom}" ? Cette action est irréversible.`)) return;
+    const res = await fetch(`/api/v1/investissements/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+        location.reload();
+    } else {
+        alert("Erreur lors de la suppression du placement");
+    }
+}
+
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') fermerNouvelObjectif();
+    if (e.key === 'Escape') {
+        fermerNouvelObjectif();
+        fermerNouveauPlacement();
+        fermerGestionPlacement();
+    }
 });
 
 {% if evolution %}
@@ -360,6 +600,59 @@ if (repCtx) {
             responsive: true,
             maintainAspectRatio: true,
             plugins: { legend: { display: false } }
+        }
+    });
+}
+{% endif %}
+
+{% if repartition_investissements %}
+const repInvestCtx = document.getElementById('repartitionInvestChart');
+if (repInvestCtx) {
+    new Chart(repInvestCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for type in repartition_investissements.keys() %}'{{ type }}',{% endfor %}],
+            datasets: [{
+                data: [{% for valeur in repartition_investissements.values() %}{{ valeur }},{% endfor %}],
+                backgroundColor: [{% for type in repartition_investissements.keys() %}'{{ type_colors.get(type, "#6b7280") }}',{% endfor %}],
+                borderColor: '#111827',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+{% endif %}
+
+{% if evolution_investissements %}
+const evoInvestCtx = document.getElementById('evolutionInvestChart');
+if (evoInvestCtx) {
+    new Chart(evoInvestCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for e in evolution_investissements %}'{{ e.label }}',{% endfor %}],
+            datasets: [{
+                data: [{% for e in evolution_investissements %}{{ e.total }},{% endfor %}],
+                borderColor: '#eab308',
+                backgroundColor: 'rgba(234, 179, 8, 0.12)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 2,
+                pointBackgroundColor: '#eab308',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { display: false } },
+                y: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
         }
     });
 }

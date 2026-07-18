@@ -7,6 +7,8 @@ class PlacementBase(BaseModel):
     nom_support: str
     capital_investi: float
     valeur_actuelle: float
+    date_investissement: datetime | None = None
+    description: str | None = None
 
     @field_validator("capital_investi", "valeur_actuelle")
     @classmethod
@@ -14,15 +16,6 @@ class PlacementBase(BaseModel):
         if v < 0:
             raise ValueError("Les montants ne peuvent pas être négatifs.")
         return v
-
-
-class PlacementCreate(PlacementBase):
-    pass
-
-
-class PlacementUpdateValeur(BaseModel):
-    """Payload pour la mise à jour périodique de la valeur liquidative."""
-    valeur_actuelle: float
 
 
 class PlacementRead(PlacementBase):

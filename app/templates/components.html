@@ -279,3 +279,44 @@
     </form>
 </div>
 {% endmacro %}
+
+{# ===== LIGNE DU TABLEAU PORTEFEUILLE (placement) ===== #}
+{# Badge de type coloré, gain/perte avec icône de tendance, action "Gérer" unique #}
+
+{% macro placement_row(p, type_colors) %}
+{% set couleur_type = type_colors.get(p.type_actif, "#6b7280") %}
+<tr class="hover:bg-gray-800/50 transition">
+    <td class="py-2.5 px-4">
+        <p class="text-white font-medium">{{ p.nom_support }}</p>
+        {% if p.description %}<p class="text-[10px] text-gray-600 truncate max-w-[180px]">{{ p.description }}</p>{% endif %}
+    </td>
+    <td class="py-2.5 px-4 hidden md:table-cell">
+        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
+              style="background-color: {{ couleur_type }}22; color: {{ couleur_type }};">
+            {{ p.type_actif }}
+        </span>
+    </td>
+    <td class="py-2.5 px-4 text-right text-gray-300">{{ "%.2f"|format(p.capital_investi) }} €</td>
+    <td class="py-2.5 px-4 text-right valeur text-yellow-400 font-semibold">{{ "%.2f"|format(p.valeur_actuelle) }} €</td>
+    <td class="py-2.5 px-4 text-right">
+        <div class="flex items-center justify-end gap-1 font-bold
+            {% if p.plus_value > 0 %}text-emerald-400{% elif p.plus_value < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+            {% if p.plus_value > 0 %}{{ icons.icon("trending-up", "12") }}{% elif p.plus_value < 0 %}{{ icons.icon("trending-down", "12") }}{% endif %}
+            <span class="valeur">{% if p.plus_value > 0 %}+{% endif %}{{ "%.2f"|format(p.plus_value) }} €</span>
+        </div>
+        <p class="text-[10px] {% if p.plus_value > 0 %}text-emerald-500{% elif p.plus_value < 0 %}text-red-500{% else %}text-gray-600{% endif %}">
+            {% if p.performance_pct is not none %}{% if p.plus_value > 0 %}+{% endif %}{{ p.performance_pct }}%{% else %}—{% endif %}
+        </p>
+    </td>
+    <td class="py-2.5 px-4 text-gray-500 hidden lg:table-cell text-xs whitespace-nowrap">{{ p.date_valorisation.strftime("%d/%m/%y") }}</td>
+    <td class="py-2.5 px-4 text-right">
+        <button type="button"
+                data-id="{{ p.id }}" data-nom="{{ p.nom_support }}" data-type="{{ p.type_actif }}"
+                data-description="{{ p.description or '' }}" data-valeur="{{ p.valeur_actuelle }}"
+                onclick="ouvrirGestionPlacement(this)" title="Gérer ce placement"
+                class="text-gray-500 hover:text-white transition">
+            {{ icons.icon("pencil", "14") }}
+        </button>
+    </td>
+</tr>
+{% endmacro %}
