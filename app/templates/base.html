@@ -50,35 +50,40 @@
 
     <!-- ==================== BARRE DE NAVIGATION FLOTTANTE (haut) ==================== -->
     <div class="fixed top-4 inset-x-0 z-40 px-4">
-        <nav class="max-w-2xl mx-auto flex items-center gap-0.5 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2 py-1.5">
-            <a href="/" class="flex items-center gap-1.5 pr-2.5 mr-1 border-r border-gray-800/60 flex-shrink-0 group">
-                <span class="text-base leading-none">💰</span>
-                <span class="hidden sm:inline text-white font-bold text-[13px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
+        <nav class="max-w-3xl mx-auto flex items-center gap-1 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2.5 py-2">
+            <a href="/" class="flex items-center gap-2 pr-3 mr-1 border-r border-gray-800/60 flex-shrink-0 group">
+                <span class="text-lg leading-none">💰</span>
+                <span class="hidden sm:inline text-white font-bold text-[15px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
             </a>
 
-            <div class="flex items-center gap-0.5 flex-1">
+            <div class="flex items-center gap-1 flex-1 justify-center">
                 {% for href, icon_name, label in nav_items %}
                 {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
                 <a href="{{ href }}"
-                   class="flex items-center gap-1.5 px-[11px] py-[7px] rounded-full text-[13px] font-medium transition
+                   class="flex items-center gap-2 px-[13px] py-[8px] rounded-full text-[15px] font-medium transition
                           {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
-                    {{ icons.icon(icon_name, "17") }}
+                    {{ icons.icon(icon_name, "20") }}
                     <span class="hidden sm:inline">{{ label }}</span>
                 </a>
                 {% endfor %}
             </div>
 
+            <!-- Bouton Mode discrétion -->
             <button id="toggle-discretion"
                     onclick="toggleDiscretion()"
-                    class="flex items-center gap-1.5 px-[11px] py-[7px] rounded-full text-[13px] font-medium text-gray-500 hover:text-gray-200 hover:bg-gray-900/60 transition flex-shrink-0">
-                <span id="icone-discretion" class="flex-shrink-0">{{ icons.icon("eye", "17") }}</span>
-                <span id="texte-discretion" class="hidden md:inline">Mode discrétion</span>
+                    title="Mode discrétion"
+                    class="relative flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ml-1
+                           bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                           shadow-inner hover:text-emerald-400 hover:border-emerald-600/50 hover:from-gray-800 hover:to-gray-800
+                           transition-all duration-300">
+                <span id="icone-discretion-off">{{ icons.icon("eye", "18") }}</span>
+                <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
             </button>
         </nav>
     </div>
 
     <!-- ==================== CONTENU PRINCIPAL ==================== -->
-    <main class="pt-20 md:pt-24 px-4 md:px-8 pb-10">
+    <main class="pt-24 md:pt-28 px-4 md:px-8 pb-10">
         <div class="max-w-6xl mx-auto">
             {% block content %}{% endblock %}
         </div>
@@ -98,8 +103,21 @@
             el.classList.toggle('blur-sm', isDiscret);
             el.classList.toggle('select-none', isDiscret);
         });
-        const texte = document.getElementById('texte-discretion');
-        if (texte) texte.textContent = isDiscret ? 'Mode visible' : 'Mode discrétion';
+
+        const btn = document.getElementById('toggle-discretion');
+        const iconOff = document.getElementById('icone-discretion-off');
+        const iconOn = document.getElementById('icone-discretion-on');
+        if (iconOff && iconOn) {
+            iconOff.classList.toggle('hidden', isDiscret);
+            iconOn.classList.toggle('hidden', !isDiscret);
+        }
+        if (btn) {
+            btn.classList.toggle('text-emerald-400', isDiscret);
+            btn.classList.toggle('border-emerald-500/60', isDiscret);
+            btn.classList.toggle('bg-emerald-500/10', isDiscret);
+            btn.classList.toggle('shadow-[0_0_14px_rgba(16,185,129,0.4)]', isDiscret);
+            btn.title = isDiscret ? 'Désactiver le mode discrétion' : 'Activer le mode discrétion';
+        }
     }
 
     function toggleDiscretion() {
