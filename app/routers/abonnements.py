@@ -141,3 +141,28 @@ def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
     db.delete(abonnement)
     db.commit()
+
+
+# ==================== GESTION DES PRÉLÈVEMENTS ====================
+
+@router.get("/prelevements/", summary="Gestion des prélèvements automatiques")
+def page_prelevements(request: Request):
+    """Affiche le tableau de bord des prélèvements d'abonnements."""
+    return templates.TemplateResponse("prelevements.html", {"request": request})
+
+
+@router.get("/api/v1/prelevements/prochains", summary="Lister les prochains prélèvements")
+def get_prochains_prelevements(jours: int = 30):
+    """Retourne la liste des prochains prélèvements dans N jours."""
+    from app.services.prelevements import obtenir_prochains_prelevements
+    return obtenir_prochains_prelevements(jours)
+
+
+@router.post("/api/v1/prelevements/executer-maintenant", summary="Déclencher les prélèvements maintenant (TEST)")
+def executer_prelevements_maintenant():
+    """
+    Exécute immédiatement les prélèvements de la journée.
+    ⚠️ Endpoint de test uniquement - à supprimer en production.
+    """
+    from app.services.prelevements import executer_prelevements
+    return executer_prelevements()
