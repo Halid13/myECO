@@ -145,7 +145,7 @@
     {{ components.kpi_mini("Total investi", portefeuille_capital, "€", "banknotes", "blue") }}
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        {{ icons.icon("trending-up" if portefeuille_plus_value >= 0 else "trending-down", "18", class="mb-2 " + ("text-emerald-400" if portefeuille_plus_value > 0 else "text-red-400" if portefeuille_plus_value < 0 else "text-gray-400")) }}
+        {{ icons.icon("arrow-up" if portefeuille_plus_value >= 0 else "arrow-down", "18", class="mb-2 " + ("text-emerald-400" if portefeuille_plus_value > 0 else "text-red-400" if portefeuille_plus_value < 0 else "text-gray-400")) }}
         <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Performance globale</p>
         <div class="flex items-baseline gap-1">
             <p class="valeur text-xl font-bold {% if portefeuille_plus_value > 0 %}text-emerald-400{% elif portefeuille_plus_value < 0 %}text-red-400{% else %}text-gray-300{% endif %}">

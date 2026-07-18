@@ -50,17 +50,18 @@
 
     <!-- ==================== BARRE DE NAVIGATION FLOTTANTE (haut) ==================== -->
     <div class="fixed top-4 inset-x-0 z-40 px-4">
-        <nav class="max-w-3xl mx-auto flex items-center gap-1 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2.5 py-2">
-            <a href="/" class="flex items-center gap-2 pr-3 mr-1 border-r border-gray-800/60 flex-shrink-0 group">
+        <nav class="max-w-3xl mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2.5 py-2">
+
+            <a href="/" class="flex items-center gap-2 justify-self-start flex-shrink-0 group">
                 <span class="text-lg leading-none">💰</span>
                 <span class="hidden sm:inline text-white font-bold text-[15px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
             </a>
 
-            <div class="flex items-center gap-1 flex-1 justify-center">
+            <div class="flex items-center gap-1 justify-self-center">
                 {% for href, icon_name, label in nav_items %}
                 {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
                 <a href="{{ href }}"
-                   class="flex items-center gap-2 px-[13px] py-[8px] rounded-full text-[15px] font-medium transition
+                   class="flex items-center gap-2 px-[13px] py-[8px] rounded-full text-[15px] font-medium transition whitespace-nowrap
                           {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
                     {{ icons.icon(icon_name, "20") }}
                     <span class="hidden sm:inline">{{ label }}</span>
@@ -68,35 +69,38 @@
                 {% endfor %}
             </div>
 
-            <!-- Bouton Notifications -->
-            <div class="relative flex-shrink-0 ml-1">
-                <button id="toggle-notifications"
-                        onclick="toggleNotifications(event)"
-                        title="Conseils & alertes"
-                        class="relative flex items-center justify-center w-10 h-10 rounded-full
-                               bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                               shadow-inner hover:text-gray-200 hover:border-gray-600 transition-all duration-300">
-                    {{ icons.icon("bell", "18") }}
-                    <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-gray-950"></span>
-                </button>
+            <div class="flex items-center gap-1.5 justify-self-end flex-shrink-0">
+                <!-- Bouton Notifications -->
+                <div class="relative flex-shrink-0">
+                    <button id="toggle-notifications"
+                            onclick="toggleNotifications(event)"
+                            title="Conseils & alertes"
+                            class="relative flex items-center justify-center w-10 h-10 rounded-full
+                                   bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                                   shadow-inner hover:text-gray-200 hover:border-gray-600 transition-all duration-300">
+                        {{ icons.icon("bell", "18") }}
+                        <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-gray-950"></span>
+                    </button>
 
-                <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-gray-950/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl p-3">
-                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
-                    <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                    <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-gray-950/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl p-3">
+                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
+                        <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                    </div>
                 </div>
+
+                <!-- Bouton Mode discrétion -->
+                <button id="toggle-discretion"
+                        onclick="toggleDiscretion()"
+                        title="Mode discrétion"
+                        class="relative flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
+                               bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                               shadow-inner hover:text-emerald-400 hover:border-emerald-600/50 hover:from-gray-800 hover:to-gray-800
+                               transition-all duration-300">
+                    <span id="icone-discretion-off">{{ icons.icon("eye", "18") }}</span>
+                    <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
+                </button>
             </div>
 
-            <!-- Bouton Mode discrétion -->
-            <button id="toggle-discretion"
-                    onclick="toggleDiscretion()"
-                    title="Mode discrétion"
-                    class="relative flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ml-1
-                           bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                           shadow-inner hover:text-emerald-400 hover:border-emerald-600/50 hover:from-gray-800 hover:to-gray-800
-                           transition-all duration-300">
-                <span id="icone-discretion-off">{{ icons.icon("eye", "18") }}</span>
-                <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
-            </button>
         </nav>
     </div>
 

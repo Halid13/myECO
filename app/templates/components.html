@@ -301,7 +301,7 @@
     <td class="py-2.5 px-4 text-right">
         <div class="flex items-center justify-end gap-1 font-bold
             {% if p.plus_value > 0 %}text-emerald-400{% elif p.plus_value < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
-            {% if p.plus_value > 0 %}{{ icons.icon("trending-up", "12") }}{% elif p.plus_value < 0 %}{{ icons.icon("trending-down", "12") }}{% endif %}
+            {% if p.plus_value > 0 %}{{ icons.icon("arrow-up", "12") }}{% elif p.plus_value < 0 %}{{ icons.icon("arrow-down", "12") }}{% endif %}
             <span class="valeur">{% if p.plus_value > 0 %}+{% endif %}{{ "%.2f"|format(p.plus_value) }} €</span>
         </div>
         <p class="text-[10px] {% if p.plus_value > 0 %}text-emerald-500{% elif p.plus_value < 0 %}text-red-500{% else %}text-gray-600{% endif %}">
