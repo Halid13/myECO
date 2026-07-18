@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException, Form
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -6,8 +6,10 @@ from app.database import get_db
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
+from app.models.epargne import ObjectifEpargne
 from app.schemas.compte import CompteCreate, CompteRead, CompteUpdate
 from app.schemas.mouvement import MouvementCreate, MouvementRead
+from app.services.finances import calculer_revenus_mois
 
 router = APIRouter(tags=["Comptes"])
 templates = Jinja2Templates(directory="app/templates")
@@ -21,12 +23,17 @@ def page_comptes(request: Request, compte_id: int | None = None, db: Session = D
         q = q.filter(Mouvement.id_compte == compte_id)
     mouvements = q.order_by(Mouvement.date_mouvement.desc()).limit(100).all()
     total_liquidites = sum(c.solde for c in comptes)
+    objectifs_epargne = (
+        db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
+    )
     return templates.TemplateResponse("mouvements.html", {
         "request": request,
         "comptes": comptes,
         "mouvements": mouvements,
         "total_liquidites": round(total_liquidites, 2),
         "filtre_compte_id": compte_id,
+        "revenus_mois": round(calculer_revenus_mois(db, date.today()), 2),
+        "objectifs_epargne": objectifs_epargne,
     })
 
 

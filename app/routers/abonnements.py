@@ -30,6 +30,12 @@ MOIS_FR = [
 ]
 JOURS_SEMAINE_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
+CHART_COLORS = [
+    "#f97316", "#ef4444", "#8b5cf6", "#3b82f6",
+    "#10b981", "#eab308", "#ec4899", "#06b6d4",
+    "#84cc16", "#f43f5e", "#6366f1", "#14b8a6",
+]
+
 
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
 def page_abonnements(request: Request, db: Session = Depends(get_db)):
@@ -91,6 +97,7 @@ def page_abonnements(request: Request, db: Session = Depends(get_db)):
         "premier_jour_semaine": premier_jour_semaine,
         "mois_annee_fr": mois_annee_fr,
         "jours_semaine_fr": JOURS_SEMAINE_FR,
+        "chart_colors": CHART_COLORS,
     })
 
 

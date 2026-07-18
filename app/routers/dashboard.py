@@ -8,7 +8,7 @@ from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
-from app.models.mouvement import TypeMouvement
+from app.services.finances import calculer_revenus_mois
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -46,14 +46,9 @@ def _build_dashboard_context(db: Session) -> dict:
         a.montant / 12 for a in abonnements if a.frequence.value == "Annuelle"
     )
 
-    # Revenus du mois courant (mouvements de type "Entrée" du mois)
+    # Revenus du mois courant (mouvements de type "Entrée" du mois, tous comptes)
     today = date.today()
-    revenus_mois = sum(
-        m.montant for m in mouvements
-        if m.type == TypeMouvement.entree
-        and m.date_mouvement.month == today.month
-        and m.date_mouvement.year == today.year
-    )
+    revenus_mois = calculer_revenus_mois(db, today)
 
     # Reste à vivre = Revenus - Dépenses fixes
     reste_a_vivre = revenus_mois - charges_mensuelles

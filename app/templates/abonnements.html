@@ -142,9 +142,12 @@
             </div>
             <div class="mt-4 space-y-2">
                 {% for cat, montant in categories.items() %}
-                <div class="flex justify-between items-center text-xs">
-                    <span class="text-gray-400 truncate flex-1">{{ cat }}</span>
-                    <span class="valeur text-gray-200 font-semibold ml-2">{{ "%.2f"|format(montant) }} €/mois</span>
+                <div class="flex justify-between items-center text-xs gap-2">
+                    <span class="flex items-center gap-2 min-w-0 flex-1">
+                        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ chart_colors[loop.index0 % chart_colors|length] }};"></span>
+                        <span class="text-gray-400 truncate">{{ cat }}</span>
+                    </span>
+                    <span class="valeur text-gray-200 font-semibold flex-shrink-0">{{ "%.2f"|format(montant) }} €/mois</span>
                 </div>
                 {% endfor %}
             </div>
@@ -181,56 +184,62 @@
 
         <!-- Calendrier des prélèvements du mois -->
         <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <div class="flex items-center gap-2 mb-4">
+            <div class="flex items-center gap-2 mb-3">
                 {{ icons.icon("calendar", "16") }}
                 <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Calendrier du mois</h3>
                 <span class="ml-auto text-xs font-medium text-gray-500">{{ mois_annee_fr }}</span>
             </div>
 
-            <!-- En-têtes des jours de la semaine -->
-            <div class="grid grid-cols-7 gap-1 mb-1.5">
-                {% for j in jours_semaine_fr %}
-                <div class="text-center text-[10px] font-semibold text-gray-600 uppercase tracking-wide">{{ j }}</div>
-                {% endfor %}
-            </div>
-
-            <!-- Grille du mois -->
-            <div class="grid grid-cols-7 gap-1">
-                {% for _ in range(premier_jour_semaine) %}
-                <div></div>
-                {% endfor %}
-                {% for day in range(1, days_in_month + 1) %}
-                {% set has_abo = day in par_jour %}
-                {% set is_today = day == today.day %}
-                {% set is_past = day < today.day %}
-                {% set is_imminent = has_abo and not is_past and (day - today.day) <= 7 %}
-                {% set total_jour = par_jour[day]|sum(attribute="montant") if has_abo else 0 %}
-                <div class="aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 transition
-                    {% if is_today %}bg-emerald-600 ring-2 ring-emerald-500/40
-                    {% elif is_imminent %}bg-orange-500/10 border border-orange-800/40
-                    {% elif has_abo %}bg-gray-800/60
-                    {% else %}hover:bg-gray-800/30{% endif %}"
-                    {% if has_abo %}title="{{ par_jour[day]|map(attribute='libelle')|join(', ') }}"{% endif %}>
-                    <span class="text-[11px] font-semibold
-                        {% if is_today %}text-white
-                        {% elif is_past %}text-gray-700
-                        {% elif is_imminent %}text-orange-300
-                        {% else %}text-gray-400{% endif %}">{{ day }}</span>
-                    {% if has_abo %}
-                    <span class="valeur text-[9px] font-bold leading-none
-                        {% if is_today %}text-white/90
-                        {% elif is_imminent %}text-orange-400
-                        {% else %}text-gray-500{% endif %}">{{ "%.0f"|format(total_jour) }}€</span>
-                    {% endif %}
+            <!-- Grille réduite à 80% (case ~20% plus compacte) -->
+            <div class="max-w-[80%] mx-auto">
+                <!-- En-têtes des jours de la semaine -->
+                <div class="grid grid-cols-7 gap-0.5 mb-1">
+                    {% for j in jours_semaine_fr %}
+                    <div class="text-center text-[9px] font-semibold text-gray-600 uppercase tracking-wide">{{ j }}</div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+
+                <!-- Grille du mois -->
+                <div class="grid grid-cols-7 gap-0.5">
+                    {% for _ in range(premier_jour_semaine) %}
+                    <div></div>
+                    {% endfor %}
+                    {% for day in range(1, days_in_month + 1) %}
+                    {% set has_abo = day in par_jour %}
+                    {% set is_today = day == today.day %}
+                    {% set is_past = day < today.day %}
+                    {% set is_imminent = has_abo and not is_past and (day - today.day) <= 7 %}
+                    {% set total_jour = par_jour[day]|sum(attribute="montant") if has_abo else 0 %}
+                    <div class="aspect-square rounded-md flex flex-col items-center justify-center gap-0.5 transition
+                        {% if is_today %}bg-emerald-600 ring-2 ring-emerald-500/40
+                        {% elif is_imminent %}bg-orange-500/15 border border-orange-700/50
+                        {% elif has_abo %}bg-blue-500/10 border border-blue-800/40
+                        {% elif is_past %}bg-gray-900/40
+                        {% else %}hover:bg-gray-800/30{% endif %}"
+                        {% if has_abo %}title="{{ par_jour[day]|map(attribute='libelle')|join(', ') }}"{% endif %}>
+                        <span class="text-[10px] font-semibold
+                            {% if is_today %}text-white
+                            {% elif is_past %}text-gray-600
+                            {% elif is_imminent %}text-orange-300
+                            {% elif has_abo %}text-blue-300
+                            {% else %}text-gray-400{% endif %}">{{ day }}</span>
+                        {% if has_abo %}
+                        <span class="valeur text-[8px] font-bold leading-none
+                            {% if is_today %}text-white/90
+                            {% elif is_imminent %}text-orange-400
+                            {% else %}text-blue-400{% endif %}">{{ "%.0f"|format(total_jour) }}€</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <!-- Légende -->
             <div class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-gray-600">
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-600 inline-block"></span> Aujourd'hui</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-orange-500/20 border border-orange-800/40 inline-block"></span> Imminent (7j)</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-gray-800/60 inline-block"></span> Prélèvement prévu</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-orange-500/20 border border-orange-700/50 inline-block"></span> Imminent (7j)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-500/15 border border-blue-800/40 inline-block"></span> Prélèvement prévu</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-gray-900/60 border border-gray-800 inline-block"></span> Passé</span>
             </div>
         </div>
 
@@ -252,16 +261,22 @@
                 <tbody class="divide-y divide-gray-800">
                     {% for a in abonnements %}
                     {% set jours_avant = a.jour_prelevement - today.day if a.jour_prelevement >= today.day else days_in_month - today.day + a.jour_prelevement %}
-                    <tr class="hover:bg-gray-800/50 transition {% if jours_avant <= 7 %}bg-orange-950/10{% endif %}">
+                    <tr class="hover:bg-gray-800/50 transition
+                        {% if jours_avant == 0 %}bg-emerald-950/10
+                        {% elif jours_avant <= 7 %}bg-orange-950/10{% endif %}">
                         <td class="py-2 px-3">
-                            <span class="text-white font-medium">{{ a.libelle }}</span>
-                            {% if jours_avant <= 7 %}
-                            <span class="ml-1 text-orange-400 text-xs">
-                                {% if jours_avant == 0 %}(Aujourd'hui)
-                                {% elif jours_avant == 1 %}(Demain)
-                                {% else %}(J-{{ jours_avant }}){% endif %}
-                            </span>
-                            {% endif %}
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium">{{ a.libelle }}</span>
+                                {% if jours_avant == 0 %}
+                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-700/40 whitespace-nowrap">Aujourd'hui</span>
+                                {% elif jours_avant <= 7 %}
+                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-300 border border-orange-700/50 whitespace-nowrap">
+                                    {% if jours_avant == 1 %}Demain{% else %}J-{{ jours_avant }}{% endif %}
+                                </span>
+                                {% else %}
+                                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-800/40 whitespace-nowrap">Prévu</span>
+                                {% endif %}
+                            </div>
                         </td>
                         <td class="py-2 px-3 hidden md:table-cell">
                             {% if a.categorie %}
@@ -348,11 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if categories %}
 const catCtx = document.getElementById('categoriesChart');
 if (catCtx) {
-    const COLORS = [
-        '#f97316', '#ef4444', '#8b5cf6', '#3b82f6',
-        '#10b981', '#eab308', '#ec4899', '#06b6d4',
-        '#84cc16', '#f43f5e', '#6366f1', '#14b8a6'
-    ];
+    const COLORS = [{% for c in chart_colors %}'{{ c }}',{% endfor %}];
     new Chart(catCtx, {
         type: 'doughnut',
         data: {

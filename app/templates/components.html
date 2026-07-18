@@ -34,27 +34,37 @@
 </div>
 {% endmacro %}
 
-{# ===== CARTES BANCAIRES COMPACTES ===== #}
+{# ===== CARTE BANCAIRE MINIATURE (Dashboard) ===== #}
+{# Version réduite de bank_card_realistic — même identité visuelle, format compact #}
 
-{% macro bank_card_compact(compte) %}
+{% macro bank_card_mini(compte) %}
+{% set themes = [
+    ("from-emerald-700 via-emerald-900 to-gray-950", "text-emerald-200/70"),
+    ("from-indigo-600 via-indigo-900 to-gray-950", "text-indigo-200/70"),
+    ("from-amber-600 via-yellow-900 to-gray-950", "text-amber-100/70"),
+    ("from-violet-600 via-purple-900 to-gray-950", "text-violet-200/70"),
+    ("from-gray-600 via-gray-900 to-black", "text-gray-300/70"),
+    ("from-cyan-600 via-teal-900 to-gray-950", "text-cyan-200/70"),
+] %}
+{% set theme = themes[compte.id % themes|length] %}
 <a href="/comptes/?compte_id={{ compte.id }}"
-   class="block bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg p-4 hover:border-emerald-600/60 transition group">
-    <div class="flex justify-between items-start mb-3">
-        <div class="min-w-0">
-            <p class="text-xs text-gray-500 uppercase tracking-wider truncate">{{ compte.nom_banque }}</p>
-            <p class="text-[11px] text-gray-600 mt-0.5">MAJ {{ compte.date_maj.strftime("%d/%m") }}</p>
-        </div>
-        {{ icons.icon("building-bank", "16", class="text-gray-600 group-hover:text-emerald-400 transition flex-shrink-0") }}
+   class="relative block rounded-xl p-3 bg-gradient-to-br {{ theme[0] }} border border-white/10 shadow-lg overflow-hidden aspect-[1.6/1] flex flex-col justify-between transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+
+    <div class="pointer-events-none absolute -right-5 -bottom-6 w-20 h-20 rounded-full bg-white/5"></div>
+
+    <div class="flex items-start justify-between relative z-[1] gap-1">
+        <p class="text-[10px] font-semibold uppercase tracking-wider {{ theme[1] }} truncate">{{ compte.nom_banque }}</p>
+        <div class="w-4 h-3 rounded-[2px] bg-gradient-to-br from-yellow-200/90 via-yellow-400/70 to-yellow-600/60 border border-yellow-100/30 flex-shrink-0"></div>
     </div>
-    <div class="flex items-end justify-between gap-2">
-        <p class="valeur text-lg font-bold text-white truncate">{{ "%.2f"|format(compte.solde) }} €</p>
-        <span class="flex items-center gap-1 text-[11px] font-medium flex-shrink-0 mb-0.5
-            {% if compte.solde < 100 %}text-red-400
-            {% elif compte.solde < 500 %}text-orange-400
-            {% else %}text-emerald-400{% endif %}">
-            <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-            {% if compte.solde < 100 %}Faible{% elif compte.solde < 500 %}Surveiller{% else %}OK{% endif %}
-        </span>
+
+    <p class="valeur text-[9px] tracking-[0.15em] text-white/40 relative z-[1]">•••• {{ "%04d"|format(compte.id) }}</p>
+
+    <div class="flex items-end justify-between relative z-[1] gap-1">
+        <p class="valeur text-sm font-bold text-white truncate">{{ "%.2f"|format(compte.solde) }} €</p>
+        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 mb-0.5
+            {% if compte.solde < 100 %}bg-red-400
+            {% elif compte.solde < 500 %}bg-orange-300
+            {% else %}bg-emerald-300{% endif %}"></span>
     </div>
 </a>
 {% endmacro %}

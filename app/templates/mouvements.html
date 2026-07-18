@@ -195,8 +195,8 @@
 <div id="modal-edit-compte" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
      onclick="if (event.target === this) fermerEditionCompte()">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm">
-        <div class="flex items-center justify-between p-4 border-b border-gray-800">
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 bg-gray-950">
             <div class="flex items-center gap-2">
                 {{ icons.icon("pencil", "16", class="text-emerald-400") }}
                 <h3 class="text-sm font-semibold text-white">Modifier le compte</h3>
@@ -229,6 +229,42 @@
                 </button>
             </div>
         </form>
+
+        <!-- Épargne : initialiser ou alimenter une poche depuis ce compte -->
+        <div class="border-t border-gray-800 p-4 space-y-2">
+            <p class="text-[11px] text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                {{ icons.icon("flag", "12") }} Épargne
+            </p>
+            <p class="text-[11px] text-gray-600">
+                Revenus de ce mois :
+                <span class="valeur text-gray-400 font-medium">{{ "%.2f"|format(revenus_mois) }} €</span>
+            </p>
+
+            <select id="epargne-select" onchange="toggleNouvelleEpargne()"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500">
+                <option value="">— Ne pas épargner —</option>
+                {% for o in objectifs_epargne %}
+                <option value="{{ o.id }}">{{ o.nom }} ({{ "%.0f"|format(o.montant_actuel) }} / {{ "%.0f"|format(o.montant_cible) }} €)</option>
+                {% endfor %}
+                <option value="__new__">+ Initialiser une nouvelle épargne</option>
+            </select>
+
+            <div id="epargne-nouveau-wrap" class="hidden space-y-2">
+                <input id="epargne-nouveau-nom" type="text" placeholder="Nom du projet (ex: Épargne)"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+                <input id="epargne-nouveau-cible" type="number" step="0.01" min="0.01" placeholder="Objectif visé (€)"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            </div>
+
+            <div class="flex gap-2">
+                <input id="epargne-montant" type="number" step="0.01" min="0.01" placeholder="Montant à épargner (€)"
+                    class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+                <button type="button" onclick="epargnerDepuisCompte()"
+                    class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg px-4 transition flex items-center gap-1.5">
+                    {{ icons.icon("flag", "14") }} Épargner
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -253,11 +289,71 @@ function ouvrirEditionCompte(btn) {
     document.getElementById('edit-compte-id').value = btn.dataset.id;
     document.getElementById('edit-compte-nom').value = btn.dataset.nom;
     document.getElementById('edit-compte-solde').value = btn.dataset.solde;
+    resetEpargneForm();
     document.getElementById('modal-edit-compte').classList.remove('hidden');
 }
 
 function fermerEditionCompte() {
     document.getElementById('modal-edit-compte').classList.add('hidden');
+}
+
+function resetEpargneForm() {
+    document.getElementById('epargne-select').value = '';
+    document.getElementById('epargne-nouveau-wrap').classList.add('hidden');
+    document.getElementById('epargne-nouveau-nom').value = '';
+    document.getElementById('epargne-nouveau-cible').value = '';
+    document.getElementById('epargne-montant').value = '';
+}
+
+function toggleNouvelleEpargne() {
+    const estNouveau = document.getElementById('epargne-select').value === '__new__';
+    document.getElementById('epargne-nouveau-wrap').classList.toggle('hidden', !estNouveau);
+}
+
+async function epargnerDepuisCompte() {
+    const select = document.getElementById('epargne-select');
+    const montant = parseFloat(document.getElementById('epargne-montant').value);
+
+    if (!select.value) {
+        alert('Choisissez une épargne à alimenter, ou initialisez-en une nouvelle.');
+        return;
+    }
+    if (!montant || montant <= 0) {
+        alert('Indiquez un montant à épargner supérieur à 0.');
+        return;
+    }
+
+    let objectifId = select.value;
+
+    if (objectifId === '__new__') {
+        const nom = document.getElementById('epargne-nouveau-nom').value.trim();
+        const cible = parseFloat(document.getElementById('epargne-nouveau-cible').value);
+        if (!nom || !cible || cible <= 0) {
+            alert("Indiquez un nom et un objectif visé pour initialiser l'épargne.");
+            return;
+        }
+        const creation = await fetch('/api/v1/epargne', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nom: nom, montant_cible: cible })
+        });
+        if (!creation.ok) {
+            alert("Erreur lors de l'initialisation de l'épargne");
+            return;
+        }
+        objectifId = (await creation.json()).id;
+    }
+
+    const alimentation = await fetch(`/api/v1/epargne/${objectifId}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ montant: montant })
+    });
+    if (alimentation.ok) {
+        location.reload();
+    } else {
+        alert("Erreur lors de la mise à jour de l'épargne");
+    }
 }
 
 async function enregistrerEditionCompte(event) {
