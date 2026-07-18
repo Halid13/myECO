@@ -1,0 +1,14 @@
+# Environnement Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Base de données SQLite (données personnelles, jamais versionnées)
+data/*.db
+
+# Fichiers système
+.DS_Store
+Thumbs.db

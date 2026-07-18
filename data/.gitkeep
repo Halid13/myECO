@@ -1,0 +1,2 @@
+# Ce dossier contient la base de données SQLite finansmart.db
+# Le fichier .db est ignoré par git (voir .gitignore)

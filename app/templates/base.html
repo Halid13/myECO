@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinanSmart — {% block title %}{% endblock %}</title>
+    <!-- Tailwind CSS (CDN pour le développement) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+
+    <!-- Navigation principale -->
+    <nav class="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-6">
+        <span class="text-emerald-400 font-bold text-lg tracking-wide">💰 FinanSmart</span>
+        <a href="/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Dashboard</a>
+        <a href="/comptes/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Mouvements</a>
+        <a href="/patrimoine/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Patrimoine</a>
+    </nav>
+
+    <!-- Contenu principal -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
