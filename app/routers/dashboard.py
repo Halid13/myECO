@@ -37,7 +37,7 @@ def _build_dashboard_context(db: Session) -> dict:
 
     total_liquidites = sum(c.solde for c in comptes)
     total_epargne = sum(o.montant_actuel for o in objectifs)
-    total_investissements = sum(p.valeur_actuelle for p in placements)
+    total_investissements = sum(p.capital_investi for p in placements)
     total_patrimoine = total_liquidites + total_epargne + total_investissements
 
     charges_mensuelles = sum(
