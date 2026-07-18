@@ -48,59 +48,43 @@
         ("/patrimoine/", "chart-pie", "Patrimoine"),
     ] %}
 
-    <!-- ==================== SIDEBAR (desktop) ==================== -->
-    <aside class="hidden md:flex md:flex-col fixed inset-y-0 left-0 w-56 bg-gray-950 border-r border-gray-900 z-40">
-        <a href="/" class="flex items-center gap-2 h-16 px-5 border-b border-gray-900 flex-shrink-0 group">
-            <span class="text-xl">💰</span>
-            <span class="text-white font-bold text-base tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
-        </a>
-
-        <nav class="flex-1 px-3 py-5 space-y-1">
-            {% for href, icon_name, label in nav_items %}
-            {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
-            <a href="{{ href }}"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
-                      {% if is_active %}bg-emerald-500/10 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900{% endif %}">
-                {{ icons.icon(icon_name, "18") }}
-                <span>{{ label }}</span>
+    <!-- ==================== BARRE DE NAVIGATION FLOTTANTE (haut) ==================== -->
+    <div class="fixed top-4 inset-x-0 z-40 px-4">
+        <nav class="max-w-2xl mx-auto flex items-center gap-0.5 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2 py-1.5">
+            <a href="/" class="flex items-center gap-1.5 pr-2.5 mr-1 border-r border-gray-800/60 flex-shrink-0 group">
+                <span class="text-base leading-none">💰</span>
+                <span class="hidden sm:inline text-white font-bold text-[13px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
             </a>
-            {% endfor %}
-        </nav>
 
-        <div class="px-3 py-4 border-t border-gray-900 flex-shrink-0">
+            <div class="flex items-center gap-0.5 flex-1">
+                {% for href, icon_name, label in nav_items %}
+                {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
+                <a href="{{ href }}"
+                   class="flex items-center gap-1.5 px-[11px] py-[7px] rounded-full text-[13px] font-medium transition
+                          {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
+                    {{ icons.icon(icon_name, "17") }}
+                    <span class="hidden sm:inline">{{ label }}</span>
+                </a>
+                {% endfor %}
+            </div>
+
             <button id="toggle-discretion"
                     onclick="toggleDiscretion()"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-200 hover:bg-gray-900 transition">
-                <span id="icone-discretion" class="flex-shrink-0">{{ icons.icon("eye", "18") }}</span>
-                <span id="texte-discretion">Mode discrétion</span>
+                    class="flex items-center gap-1.5 px-[11px] py-[7px] rounded-full text-[13px] font-medium text-gray-500 hover:text-gray-200 hover:bg-gray-900/60 transition flex-shrink-0">
+                <span id="icone-discretion" class="flex-shrink-0">{{ icons.icon("eye", "17") }}</span>
+                <span id="texte-discretion" class="hidden md:inline">Mode discrétion</span>
             </button>
-            <p class="text-[11px] text-gray-700 text-center mt-3">FinanSmart v1.0 · Local &amp; souverain</p>
-        </div>
-    </aside>
-
-    <!-- ==================== BOTTOM NAV (mobile) ==================== -->
-    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-gray-950/95 backdrop-blur-md border-t border-gray-900 flex items-stretch">
-        {% for href, icon_name, label in nav_items %}
-        {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
-        <a href="{{ href }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 {% if is_active %}text-emerald-400{% else %}text-gray-500{% endif %}">
-            {{ icons.icon(icon_name, "20") }}
-            <span class="text-[10px] font-medium">{{ label }}</span>
-        </a>
-        {% endfor %}
-        <button onclick="toggleDiscretion()" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-gray-500">
-            <span id="icone-discretion-mobile">{{ icons.icon("eye", "20") }}</span>
-            <span class="text-[10px] font-medium">Discret</span>
-        </button>
-    </nav>
+        </nav>
+    </div>
 
     <!-- ==================== CONTENU PRINCIPAL ==================== -->
-    <main class="md:ml-56 px-4 md:px-8 py-6 md:py-10 pb-24 md:pb-10">
+    <main class="pt-20 md:pt-24 px-4 md:px-8 pb-10">
         <div class="max-w-6xl mx-auto">
             {% block content %}{% endblock %}
         </div>
     </main>
 
-    <footer class="hidden md:block md:ml-56 border-t border-gray-900 py-6 px-8">
+    <footer class="border-t border-gray-900 py-6 px-8 mt-4">
         <p class="text-center text-[11px] text-gray-700">FinanSmart — Gestion financière 100% locale et souveraine</p>
     </footer>
 
