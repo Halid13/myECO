@@ -151,7 +151,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <tbody class="divide-y divide-gray-800">
-                        {% for m in mouvements|slice(0, 5) %}
+                        {% for m in mouvements[:5] %}
                         <tr class="hover:bg-gray-800/50 transition">
                             <td class="py-2">
                                 <span class="text-gray-500">{{ m.date_mouvement.strftime("%d/%m") }}</span>
@@ -163,6 +163,8 @@
                                 {% if m.type.value == 'Entrée' %}+{% else %}-{% endif %}{{ "%.0f"|format(m.montant) }} €
                             </td>
                         </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="py-4 text-gray-600 text-center text-sm">Aucun mouvement enregistré</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
