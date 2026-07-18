@@ -8,6 +8,7 @@ from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
+from app.models.mouvement import TypeMouvement
 from app.services.assistant import generer_alertes
 
 router = APIRouter(tags=["Dashboard"])
@@ -32,8 +33,17 @@ def _build_dashboard_context(db: Session) -> dict:
         a.montant / 12 for a in abonnements if a.frequence.value == "Annuelle"
     )
 
-    # Prochains prélèvements (dans les 7 jours)
+    # Revenus du mois courant (mouvements de type "Entrée" du mois)
     today = date.today()
+    revenus_mois = sum(
+        m.montant for m in mouvements
+        if m.type == TypeMouvement.entree
+        and m.date_mouvement.month == today.month
+        and m.date_mouvement.year == today.year
+    )
+
+    # Reste à vivre = Revenus - Dépenses fixes
+    reste_a_vivre = revenus_mois - charges_mensuelles
     prochains = [
         a for a in abonnements
         if abs(a.jour_prelevement - today.day) <= 7
@@ -50,7 +60,9 @@ def _build_dashboard_context(db: Session) -> dict:
         "total_epargne": round(total_epargne, 2),
         "total_investissements": round(total_investissements, 2),
         "total_patrimoine": round(total_patrimoine, 2),
+        "revenus_mois": round(revenus_mois, 2),
         "charges_mensuelles": round(charges_mensuelles, 2),
+        "reste_a_vivre": round(reste_a_vivre, 2),
         "prochains_prelevements": prochains,
         "alertes": alertes,
     }
