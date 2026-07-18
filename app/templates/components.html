@@ -320,3 +320,34 @@
     </td>
 </tr>
 {% endmacro %}
+
+{# ===== RECOMMANDATION DE L'ASSISTANT (Module 6) ===== #}
+{# Ligne compacte : icône selon le niveau, message, lien optionnel, action "ignorer" #}
+
+{% macro recommandation_row(r) %}
+{% set icone = r.icone or ("exclamation-circle" if r.niveau == "warning" else "check-circle" if r.niveau == "success" else "info-circle") %}
+<div class="flex items-start gap-3 p-3 rounded-lg border
+    {% if r.niveau == 'warning' %}bg-orange-950/20 border-orange-800/40
+    {% elif r.niveau == 'success' %}bg-emerald-950/20 border-emerald-800/40
+    {% else %}bg-blue-950/20 border-blue-800/40{% endif %}">
+    <span class="flex-shrink-0 mt-0.5
+        {% if r.niveau == 'warning' %}text-orange-400
+        {% elif r.niveau == 'success' %}text-emerald-400
+        {% else %}text-blue-400{% endif %}">
+        {{ icons.icon(icone, "16") }}
+    </span>
+    <div class="flex-1 min-w-0">
+        <p class="text-sm text-gray-200 leading-relaxed">{{ r.message }}</p>
+        {% if r.lien %}
+        <a href="{{ r.lien }}" class="inline-block mt-1 text-xs font-medium underline opacity-80 hover:opacity-100
+            {% if r.niveau == 'warning' %}text-orange-300
+            {% elif r.niveau == 'success' %}text-emerald-300
+            {% else %}text-blue-300{% endif %}">Voir →</a>
+        {% endif %}
+    </div>
+    <button type="button" data-id="{{ r.id }}" onclick="ignorerRecommandation(this)" title="Ignorer"
+        class="flex-shrink-0 text-gray-600 hover:text-gray-300 transition">
+        {{ icons.icon("x-circle", "14") }}
+    </button>
+</div>
+{% endmacro %}

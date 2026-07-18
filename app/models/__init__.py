@@ -1,1 +1,1 @@
-from app.models import compte, mouvement, abonnement, epargne, placement  # noqa
+from app.models import compte, mouvement, abonnement, epargne, placement, assistant  # noqa

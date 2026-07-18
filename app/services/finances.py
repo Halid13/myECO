@@ -25,13 +25,41 @@ def mois_precedent(annee: int, mois: int) -> tuple[int, int]:
     return annee, mois - 1
 
 
+def calculer_mouvements_mois(db: Session, type_mouvement: TypeMouvement, today: date | None = None) -> dict:
+    """Somme des mouvements d'un type donné (Entrée/Sortie), ce mois et le mois précédent,
+    tous comptes confondus."""
+    today = today or date.today()
+    annee_prec, mois_prec = mois_precedent(today.year, today.month)
+    mouvements = db.query(Mouvement).filter(Mouvement.type == type_mouvement).all()
+    mois = sum(
+        m.montant for m in mouvements
+        if m.date_mouvement.year == today.year and m.date_mouvement.month == today.month
+    )
+    mois_precedent_total = sum(
+        m.montant for m in mouvements
+        if m.date_mouvement.year == annee_prec and m.date_mouvement.month == mois_prec
+    )
+    return {"mois": round(mois, 2), "mois_precedent": round(mois_precedent_total, 2)}
+
+
 def calculer_revenus_mois(db: Session, today: date | None = None) -> float:
     """Somme des mouvements de type Entrée du mois en cours, tous comptes confondus."""
-    today = today or date.today()
-    mouvements = db.query(Mouvement).filter(Mouvement.type == TypeMouvement.entree).all()
+    return calculer_mouvements_mois(db, TypeMouvement.entree, today)["mois"]
+
+
+# Coefficients de conversion vers un équivalent mensuel, par fréquence d'abonnement
+# (mêmes valeurs que app/routers/abonnements.py — dupliqué volontairement à l'identique
+# pour ne pas re-brancher tout ce module dans cette passe)
+COEFF_MENSUEL = {
+    "Mensuelle": 1, "Trimestrielle": 1 / 3, "Semestrielle": 1 / 6, "Annuelle": 1 / 12
+}
+
+
+def calculer_charges_mensuelles(abonnements: list) -> float:
+    """Coût mensuel équivalent de tous les abonnements actifs, toutes fréquences confondues."""
     return sum(
-        m.montant for m in mouvements
-        if m.date_mouvement.month == today.month and m.date_mouvement.year == today.year
+        a.montant * COEFF_MENSUEL.get(a.frequence.value, 1)
+        for a in abonnements
     )
 
 

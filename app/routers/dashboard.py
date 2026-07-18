@@ -8,7 +8,8 @@ from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
-from app.services.finances import calculer_revenus_mois
+from app.services.finances import calculer_revenus_mois, calculer_charges_mensuelles
+from app.services.assistant import executer_moteur
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -40,11 +41,7 @@ def _build_dashboard_context(db: Session) -> dict:
     total_investissements = sum(p.capital_investi for p in placements)
     total_patrimoine = total_liquidites + total_epargne + total_investissements
 
-    charges_mensuelles = sum(
-        a.montant for a in abonnements if a.frequence.value == "Mensuelle"
-    ) + sum(
-        a.montant / 12 for a in abonnements if a.frequence.value == "Annuelle"
-    )
+    charges_mensuelles = calculer_charges_mensuelles(abonnements)
 
     # Revenus du mois courant (mouvements de type "Entrée" du mois, tous comptes)
     today = date.today()
@@ -65,10 +62,13 @@ def _build_dashboard_context(db: Session) -> dict:
             prochains.append(a)
     prochains.sort(key=lambda a: a.jours_restants)
 
+    recommandations = executer_moteur(db, today)
+
     return {
         "comptes": comptes,
         "abonnements": abonnements,
         "mouvements": mouvements,
+        "recommandations": recommandations,
         "total_liquidites": round(total_liquidites, 2),
         "total_epargne": round(total_epargne, 2),
         "total_investissements": round(total_investissements, 2),
