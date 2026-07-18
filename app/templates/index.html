@@ -1,212 +1,238 @@
 {% extends "base.html" %}
 {% import "components.html" as components %}
+{% import "icons.html" as icons %}
 {% block title %}Dashboard — FinanSmart{% endblock %}
 
 {% block content %}
 
-<!-- En-tête du Dashboard -->
-<div class="mb-10">
+<!-- ==================== EN-TÊTE ==================== -->
+<div class="mb-6">
     <div class="flex items-center justify-between mb-2">
         <div>
-            <h1 class="text-4xl font-bold text-white">Tableau de bord</h1>
-            <p class="text-sm text-gray-500 mt-1">Vue d'ensemble de votre patrimoine financier</p>
+            <h1 class="text-3xl font-bold text-white">Tableau de bord</h1>
+            <p class="text-xs text-gray-500 mt-1">Aperçu de votre situation financière</p>
         </div>
         <button id="toggle-discretion" 
                 onclick="toggleDiscretion()" 
-                class="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition">
-            <span id="icone-discretion">👁</span>
+                class="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs rounded-lg transition">
+            <span id="icone-discretion">{{ components.icons.icon("eye", "16") }}</span>
             <span id="texte-discretion">Mode discrétion</span>
         </button>
     </div>
 </div>
 
-<!-- ==================== SECTION 1 : KPI PRINCIPAL ==================== -->
-<section class="mb-10">
-    <div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-3xl p-8 md:p-12">
-        <!-- Titre -->
-        <p class="text-sm text-gray-500 uppercase tracking-widest mb-2">💰 Patrimoine total</p>
-        
-        <!-- Chiffre dominant -->
-        <p class="valeur text-5xl md:text-6xl font-bold text-emerald-400 mb-6">
-            {{ "%.2f"|format(total_patrimoine) }} €
-        </p>
-        
-        <!-- Sous-indicateurs en ligne -->
-        <div class="grid grid-cols-3 gap-4">
-            <div class="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
-                <p class="text-xs text-gray-500 uppercase mb-1">Liquidités</p>
-                <p class="valeur text-lg font-bold text-blue-400">{{ "%.2f"|format(total_liquidites) }} €</p>
+<!-- ==================== SECTION 1 : INDICATEUR LIQUIDITÉ PRINCIPALE ==================== -->
+<section class="mb-6">
+    <div class="bg-gradient-to-br from-emerald-900/20 to-emerald-900/5 border border-emerald-800/30 rounded-xl p-6">
+        <div class="flex items-end justify-between">
+            <div>
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">💼 Liquidités totales</p>
+                <p class="valeur text-4xl font-bold text-emerald-400">{{ "%.2f"|format(total_liquidites) }} €</p>
+                <p class="text-xs text-gray-600 mt-2">Solde disponible immédiatement</p>
             </div>
-            <div class="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
-                <p class="text-xs text-gray-500 uppercase mb-1">Épargne</p>
-                <p class="valeur text-lg font-bold text-purple-400">{{ "%.2f"|format(total_epargne) }} €</p>
-            </div>
-            <div class="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
-                <p class="text-xs text-gray-500 uppercase mb-1">Investissements</p>
-                <p class="valeur text-lg font-bold text-yellow-400">{{ "%.2f"|format(total_investissements) }} €</p>
+            <div class="text-right">
+                <p class="text-xs text-gray-500 uppercase mb-2">Patrimoine total</p>
+                <p class="valeur text-2xl font-bold text-gray-200">{{ "%.2f"|format(total_patrimoine) }} €</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ==================== SECTION 2 : SOLDES DES COMPTES ==================== -->
-<section class="mb-10">
-    <h2 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-        🏦 Vos comptes bancaires
-    </h2>
+<!-- ==================== SECTION 2 : VUE BANCAIRE GLOBALE ==================== -->
+<section class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        {{ icons.icon("building-bank", "18") }}
+        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Comptes bancaires</h2>
+    </div>
     {% if comptes %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {% for compte in comptes %}
-        {{ components.bank_card(compte) }}
+        {{ components.bank_card_compact(compte) }}
         {% endfor %}
     </div>
     {% else %}
-    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
-        <p class="text-gray-400">Aucun compte enregistré.</p>
-        <a href="/comptes/" class="inline-block mt-3 text-emerald-400 text-sm font-medium hover:underline">
+    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4 text-center">
+        <p class="text-xs text-gray-400">Aucun compte enregistré.</p>
+        <a href="/comptes/" class="inline-block mt-2 text-emerald-400 text-xs font-medium hover:underline">
             Ajouter un compte →
         </a>
     </div>
     {% endif %}
 </section>
 
-<!-- ==================== SECTION 3 : RÉSUMÉ MENSUEL ==================== -->
-<section class="mb-10">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <!-- Budget mensuel -->
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-5">📊 Budget mensuel</h3>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400 text-sm">Charges fixes</span>
-                    <span class="valeur text-red-400 font-semibold">- {{ "%.2f"|format(charges_mensuelles) }} €</span>
-                </div>
-                <div class="border-t border-gray-800 pt-3">
-                    <p class="text-xs text-gray-600 mb-2">Prochains prélèvements (7 jours)</p>
-                    {% if prochains_prelevements %}
-                    <div class="space-y-2">
-                        {% for a in prochains_prelevements[:3] %}
-                        <div class="flex justify-between text-xs">
-                            <span class="text-gray-400">{{ a.libelle }}</span>
-                            <span class="text-orange-400">- {{ "%.2f"|format(a.montant) }} €</span>
-                        </div>
-                        {% endfor %}
-                        {% if prochains_prelevements|length > 3 %}
-                        <p class="text-xs text-gray-600 italic">+{{ prochains_prelevements|length - 3 }} autre(s)</p>
-                        {% endif %}
-                    </div>
-                    {% else %}
-                    <p class="text-xs text-gray-600">Aucun prélèvement imminent</p>
-                    {% endif %}
-                </div>
+<!-- ==================== SECTION 3 : RÉPARTITION PATRIMONIALE + RÉSUMÉ MENSUEL ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+    <!-- Répartition patrimoniale (Donut) -->
+    <div class="lg:col-span-1">
+        {% call components.section_card("Répartition du patrimoine", "chart-pie") %}
+        <div class="space-y-2 mb-4">
+            <canvas id="patrimoineChart" style="max-height: 150px;"></canvas>
+        </div>
+        <div class="space-y-2 text-xs">
+            <div class="flex justify-between">
+                <span class="text-gray-400">Liquidités</span>
+                <span class="valeur text-blue-400 font-semibold">{{ "%.0f"|format(total_liquidites) }} € ({{ ((total_liquidites / total_patrimoine * 100) if total_patrimoine > 0 else 0)|int }}%)</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Épargne</span>
+                <span class="valeur text-purple-400 font-semibold">{{ "%.0f"|format(total_epargne) }} € ({{ ((total_epargne / total_patrimoine * 100) if total_patrimoine > 0 else 0)|int }}%)</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Investissements</span>
+                <span class="valeur text-yellow-400 font-semibold">{{ "%.0f"|format(total_investissements) }} € ({{ ((total_investissements / total_patrimoine * 100) if total_patrimoine > 0 else 0)|int }}%)</span>
             </div>
         </div>
-
-        <!-- Objectifs d'épargne (aperçu) -->
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 lg:col-span-2">
-            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-5">🎯 Objectifs d'épargne</h3>
-            <div class="space-y-3">
-                {% if total_epargne > 0 %}
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-gray-300 font-medium">Épargne constituée</span>
-                    <span class="valeur text-purple-400 font-bold">{{ "%.2f"|format(total_epargne) }} €</span>
-                </div>
-                {% endif %}
-                <div class="flex gap-2">
-                    <a href="/patrimoine/" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg py-2 text-center transition">
-                        Gérer l'épargne →
-                    </a>
-                </div>
-            </div>
-        </div>
-
+        {% endcall %}
     </div>
-</section>
 
-<!-- ==================== SECTION 4 : ALERTES ET CONSEILS ==================== -->
+    <!-- Résumé mensuel (3 KPI) -->
+    <div class="lg:col-span-2">
+        {% call components.section_card("Résumé mensuel", "chart-bar") %}
+        <div class="grid grid-cols-3 gap-3">
+            {{ components.kpi_mini("Revenus", 0, "€", "trending-up", "emerald") }}
+            {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "tag", "red") }}
+            {{ components.kpi_mini("Reste à vivre", 0, "€", "wallet", "blue") }}
+        </div>
+        <div class="border-t border-gray-800 mt-3 pt-3">
+            <p class="text-xs text-gray-500 flex items-center gap-2">
+                {{ icons.icon("calendar", "14") }} 
+                <span>Prochains prélèvements (7j)</span>
+            </p>
+            {% if prochains_prelevements %}
+            <div class="space-y-1 mt-2 text-xs">
+                {% for a in prochains_prelevements[:3] %}
+                <div class="flex justify-between">
+                    <span class="text-gray-400">{{ a.libelle }}</span>
+                    <span class="text-orange-400">- {{ "%.0f"|format(a.montant) }} €</span>
+                </div>
+                {% endfor %}
+                {% if prochains_prelevements|length > 3 %}
+                <p class="text-gray-600 italic">+{{ prochains_prelevements|length - 3 }} autre(s)</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="text-xs text-gray-600 mt-1">Aucun prélèvement imminent</p>
+            {% endif %}
+        </div>
+        {% endcall %}
+    </div>
+
+</div>
+
+<!-- ==================== SECTION 4 : ÉPARGNE & INVESTISSEMENTS ==================== -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+    <!-- Objectifs épargne -->
+    <div>
+        {% call components.section_card("Objectifs d'épargne", "target") %}
+        <div class="space-y-2">
+            {% if total_epargne > 0 %}
+            <div class="flex justify-between items-center text-sm mb-2">
+                <span class="text-gray-400">Épargne constituée</span>
+                <span class="valeur text-purple-400 font-bold">{{ "%.0f"|format(total_epargne) }} €</span>
+            </div>
+            {% endif %}
+            <a href="/patrimoine/" class="block text-center bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded-lg py-2 transition">
+                {{ icons.icon("arrow-right", "14", class="inline mr-1") }} Gérer l'épargne
+            </a>
+        </div>
+        {% endcall %}
+    </div>
+
+    <!-- Portefeuille d'investissements -->
+    <div>
+        {% call components.section_card("Portefeuille", "chart-bar") %}
+        <div class="space-y-2">
+            {% if total_investissements > 0 %}
+            <div class="flex justify-between items-center text-sm mb-2">
+                <span class="text-gray-400">Capital investi</span>
+                <span class="valeur text-yellow-400 font-bold">{{ "%.0f"|format(total_investissements) }} €</span>
+            </div>
+            {% endif %}
+            <a href="/patrimoine/" class="block text-center bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-medium rounded-lg py-2 transition">
+                {{ icons.icon("arrow-right", "14", class="inline mr-1") }} Voir les placements
+            </a>
+        </div>
+        {% endcall %}
+    </div>
+
+</div>
+
+<!-- ==================== SECTION 5 : ALERTES ==================== -->
 {% if alertes %}
-<section class="mb-10">
-    <h2 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-        💡 Conseils & Alertes
-    </h2>
-    <div class="space-y-3">
+<section class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        {{ icons.icon("sparkles", "18") }}
+        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Conseils & alertes</h2>
+    </div>
+    <div class="space-y-2">
         {% for alerte in alertes %}
-        {{ components.alert_banner(alerte) }}
+        {{ components.alert_banner_compact(alerte) }}
         {% endfor %}
     </div>
 </section>
 {% endif %}
 
-<!-- ==================== SECTION 5 : DÉTAILS ==================== -->
-<section class="mb-10">
-    <h2 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
-        📈 Activité récente
-    </h2>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- Derniers mouvements -->
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 overflow-hidden">
-            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Derniers mouvements</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <tbody class="divide-y divide-gray-800">
-                        {% for m in mouvements[:5] %}
-                        <tr class="hover:bg-gray-800/50 transition">
-                            <td class="py-2">
-                                <span class="text-gray-500">{{ m.date_mouvement.strftime("%d/%m") }}</span>
-                            </td>
-                            <td class="py-2 text-gray-300 text-xs">
-                                {{ m.categorie or "—" }}
-                            </td>
-                            <td class="py-2 text-right font-semibold {% if m.type.value == 'Entrée' %}text-emerald-400{% else %}text-red-400{% endif %}">
-                                {% if m.type.value == 'Entrée' %}+{% else %}-{% endif %}{{ "%.0f"|format(m.montant) }} €
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="3" class="py-4 text-gray-600 text-center text-sm">Aucun mouvement enregistré</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <a href="/comptes/" class="inline-block mt-4 text-emerald-400 text-sm font-medium hover:underline">
-                Voir l'historique complet →
-            </a>
-        </div>
-
-        <!-- Performance portefeuille (si placements) -->
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">📊 Portefeuille</h3>
-            {% if total_investissements > 0 %}
-            <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-400">Capital investi</span>
-                    <span class="text-yellow-400 font-semibold">{{ "%.2f"|format(total_investissements) }} €</span>
-                </div>
-                <a href="/patrimoine/" class="block text-emerald-400 text-sm font-medium hover:underline">
-                    Détails des placements →
-                </a>
-            </div>
-            {% else %}
-            <p class="text-gray-500 text-sm mb-4">Aucun investissement déclaré pour le moment.</p>
-            <a href="/patrimoine/" class="inline-block text-emerald-400 text-sm font-medium hover:underline">
-                Déclarer un placement →
-            </a>
-            {% endif %}
-        </div>
-
+<!-- ==================== SECTION 6 : ACTIVITÉ RÉCENTE ==================== -->
+<section>
+    {% call components.section_card("Derniers mouvements", "calendar") %}
+    {% if mouvements %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+            <thead class="text-gray-600">
+                <tr class="border-b border-gray-800">
+                    <th class="text-left pb-2 px-3">Date</th>
+                    <th class="text-left pb-2 px-3">Catégorie</th>
+                    <th class="text-right pb-2 px-3">Montant</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                {% for m in mouvements[:5] %}
+                {{ components.table_row_mouvement(m) }}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    <a href="/comptes/" class="inline-block mt-3 text-emerald-400 text-xs font-medium hover:underline">
+        {{ icons.icon("arrow-right", "12", class="inline mr-1") }} Voir l'historique complet
+    </a>
+    {% else %}
+    <p class="text-xs text-gray-500">Aucun mouvement enregistré</p>
+    {% endif %}
+    {% endcall %}
 </section>
 
-<!-- ==================== FOOTER ==================== -->
-<div class="mt-12 pt-6 border-t border-gray-800 text-center">
-    <p class="text-xs text-gray-600">
-        🔒 Vos données restent sur votre machine locale. Aucune synchronisation cloud.
-    </p>
-</div>
-
-<!-- Script pour le mode discrétion -->
+<!-- ==================== SCRIPT CHART.JS ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Données pour le graphique donut
+const patrimoineCtx = document.getElementById('patrimoineChart');
+if (patrimoineCtx) {
+    new Chart(patrimoineCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Liquidités', 'Épargne', 'Investissements'],
+            datasets: [{
+                data: [{{ total_liquidites }}, {{ total_epargne }}, {{ total_investissements }}],
+                backgroundColor: ['#3b82f6', '#8b5cf6', '#eab308'],
+                borderColor: ['#1f2937', '#1f2937', '#1f2937'],
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false,
+                }
+            }
+        }
+    });
+}
+
+// Mode discrétion
 const DISCRETION_KEY = 'finansmart-discretion-mode';
 
 function toggleDiscretion() {
@@ -216,14 +242,14 @@ function toggleDiscretion() {
     if (isDiscret) {
         valeurs.forEach(el => el.classList.remove('blur-sm', 'select-none'));
         localStorage.removeItem(DISCRETION_KEY);
-        document.getElementById('icone-discretion').textContent = '👁';
+        document.getElementById('icone-discretion').innerHTML = '{{ components.icons.icon("eye", "16") }}';
         document.getElementById('texte-discretion').textContent = 'Mode discrétion';
     } else {
         valeurs.forEach(el => {
             el.classList.add('blur-sm', 'select-none');
         });
         localStorage.setItem(DISCRETION_KEY, 'true');
-        document.getElementById('icone-discretion').textContent = '👁‍🗨';
+        document.getElementById('icone-discretion').innerHTML = '{{ components.icons.icon("eye-slash", "16") }}';
         document.getElementById('texte-discretion').textContent = 'Mode visible';
     }
 }

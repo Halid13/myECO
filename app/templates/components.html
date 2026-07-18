@@ -1,123 +1,105 @@
-{# Macros de composants réutilisables pour le Dashboard #}
+{# Macros de composants réutilisables (version compacte premium) #}
+{% import "icons.html" as icons %}
 
-{# === CARTES FINANCIÈRES === #}
+{# ===== INDICATEURS KPI ===== #}
 
-{# Carte KPI simple (valeur + label + variation optionnelle) #}
-{% macro kpi_card(label, value, unit="€", variation=None, color="emerald", icon=None) %}
-<div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition">
-    {% if icon %}
-    <div class="text-3xl mb-3">{{ icon }}</div>
+{# KPI Card compact #}
+{% macro kpi_mini(label, value, unit="€", icon_name=None, color="emerald") %}
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition">
+    {% if icon_name %}
+    {{ icons.icon(icon_name, "18", class="mb-2") }}
     {% endif %}
-    <p class="text-sm text-gray-500 uppercase tracking-wider mb-2">{{ label }}</p>
-    <div class="flex items-baseline gap-2">
-        <p class="valeur text-3xl font-bold {% if color == 'emerald' %}text-emerald-400{% elif color == 'blue' %}text-blue-400{% elif color == 'purple' %}text-purple-400{% elif color == 'yellow' %}text-yellow-400{% else %}text-gray-100{% endif %}">
-            {{ "%.2f"|format(value) }}
+    <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">{{ label }}</p>
+    <div class="flex items-baseline gap-1">
+        <p class="valeur text-xl font-bold {% if color == 'emerald' %}text-emerald-400{% elif color == 'blue' %}text-blue-400{% elif color == 'purple' %}text-purple-400{% elif color == 'yellow' %}text-yellow-400{% else %}text-gray-100{% endif %}">
+            {{ "%.0f"|format(value) }}
         </p>
-        <span class="text-sm text-gray-500">{{ unit }}</span>
+        <span class="text-xs text-gray-600">{{ unit }}</span>
     </div>
-    {% if variation is not none %}
-    <div class="mt-3 text-xs {% if variation >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-        {% if variation >= 0 %}↑{% else %}↓{% endif %} {{ abs(variation) }}% vs. mois dernier
-    </div>
-    {% endif %}
 </div>
 {% endmacro %}
 
-{# Carte bancaire (compte avec solde + actions) #}
-{% macro bank_card(compte) %}
-<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl p-6 hover:border-emerald-600 transition cursor-pointer group" hx-get="/comptes/?compte_id={{ compte.id }}" hx-target="main" hx-push-url="true">
-    <div class="flex justify-between items-start mb-6">
-        <div>
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">{{ compte.nom_banque }}</p>
-            <p class="text-xs text-gray-600">Solde actuel</p>
+{# ===== CARTES BANCAIRES COMPACTES ===== #}
+
+{% macro bank_card_compact(compte) %}
+<div class="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg p-3 hover:border-emerald-600 transition cursor-pointer group">
+    <div class="flex justify-between items-start mb-2">
+        <div class="flex-1">
+            <p class="text-xs text-gray-500 uppercase tracking-wider">{{ compte.nom_banque }}</p>
+            <p class="text-xs text-gray-600 mt-1">Compte courant</p>
         </div>
-        <span class="text-2xl group-hover:scale-110 transition">🏦</span>
+        {{ icons.icon("building-bank", "16", class="text-gray-600 group-hover:text-emerald-400 transition") }}
     </div>
-    <p class="valeur text-2xl font-bold text-white mb-2">{{ "%.2f"|format(compte.solde) }} €</p>
+    <p class="valeur text-lg font-bold text-white mb-2">{{ "%.2f"|format(compte.solde) }} €</p>
     <div class="flex justify-between items-center">
-        <span class="text-xs text-gray-600">MAJ {{ compte.date_maj.strftime("%d/%m") }}</span>
+        <span class="text-xs text-gray-600">{{ compte.date_maj.strftime("%d/%m") }}</span>
         {% if compte.solde < 100 %}
-        <span class="text-xs bg-red-950 text-red-300 px-2 py-1 rounded">⚠️ Faible</span>
+        <span class="text-xs bg-red-950/80 text-red-300 px-2 py-0.5 rounded">{{ icons.icon("exclamation-circle", "12", class="inline mr-1") }} Faible</span>
         {% elif compte.solde < 500 %}
-        <span class="text-xs bg-orange-950 text-orange-300 px-2 py-1 rounded">⏱ À surveiller</span>
+        <span class="text-xs bg-orange-950/80 text-orange-300 px-2 py-0.5 rounded">{{ icons.icon("tag", "12", class="inline mr-1") }} Surveiller</span>
         {% else %}
-        <span class="text-xs bg-emerald-950 text-emerald-300 px-2 py-1 rounded">✓ OK</span>
+        <span class="text-xs bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded">{{ icons.icon("check-circle", "12", class="inline mr-1") }} OK</span>
         {% endif %}
     </div>
 </div>
 {% endmacro %}
 
-{# === INDICATEURS === #}
+{# ===== SECTION CARD COMPACTE ===== #}
 
-{# Jauge circulaire pour épargne #}
-{% macro progress_gauge(label, current, target, icon=None) %}
-{% set percentage = (current / target * 100) if target > 0 else 0 %}
-<div class="flex flex-col items-center p-4 bg-gray-900 border border-gray-800 rounded-xl hover:border-gray-700 transition">
-    {% if icon %}
-    <span class="text-2xl mb-2">{{ icon }}</span>
+{% macro section_card(title, icon_name=None) %}
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+    {% if title %}
+    <div class="flex items-center gap-2 mb-3">
+        {% if icon_name %}{{ icons.icon(icon_name, "18") }}{% endif %}
+        <h2 class="text-sm font-semibold text-gray-300 uppercase tracking-widest">{{ title }}</h2>
+    </div>
     {% endif %}
-    <!-- SVG Gauge -->
-    <svg class="w-24 h-24 mb-3" viewBox="0 0 120 120">
-        <!-- Fond gris -->
-        <circle cx="60" cy="60" r="50" fill="none" stroke="#374151" stroke-width="8" />
-        <!-- Progression -->
-        <circle cx="60" cy="60" r="50" fill="none" 
-                stroke="#8b5cf6" stroke-width="8"
-                stroke-dasharray="{{ percentage * 3.14 }} 314"
-                stroke-linecap="round"
-                transform="rotate(-90 60 60)"
-                style="transition: stroke-dasharray 0.5s ease;" />
-        <!-- Texte central -->
-        <text x="60" y="55" text-anchor="middle" font-size="24" font-weight="bold" fill="#fff">
-            {{ "%.0f"|format(percentage) }}%
-        </text>
-        <text x="60" y="75" text-anchor="middle" font-size="10" fill="#9ca3af">{{ label }}</text>
-    </svg>
-    <p class="text-xs text-gray-400 text-center">
-        <span class="text-purple-400 font-semibold">{{ "%.0f"|format(current) }} €</span> / {{ "%.0f"|format(target) }} €
-    </p>
+    {{ caller() }}
 </div>
 {% endmacro %}
 
-{# === LISTES === #}
+{# ===== ALERTES COMPACTES ===== #}
 
-{# Ligne de mouvement dans un tableau #}
-{% macro mouvement_row(mouvement) %}
-<tr class="border-b border-gray-800 hover:bg-gray-800 transition">
-    <td class="py-3 text-gray-400 text-sm">{{ mouvement.date_mouvement.strftime("%d/%m") }}</td>
-    <td class="py-3 text-white font-medium text-sm">{{ mouvement.compte.nom_banque }}</td>
-    <td class="py-3 text-gray-400 text-sm">{{ mouvement.categorie or "—" }}</td>
-    <td class="py-3 text-gray-500 text-sm truncate max-w-xs">{{ mouvement.description or "—" }}</td>
-    <td class="py-3 text-right font-semibold text-sm {% if mouvement.type.value == 'Entrée' %}text-emerald-400{% else %}text-red-400{% endif %}">
-        {% if mouvement.type.value == 'Entrée' %}+{% else %}-{% endif %}{{ "%.2f"|format(mouvement.montant) }} €
-    </td>
-</tr>
-{% endmacro %}
-
-{# Alerte/Conseil #}
-{% macro alert_banner(alerte) %}
-<div class="flex items-start gap-3 p-4 rounded-xl border backdrop-blur-sm {% if alerte.niveau == 'warning' %}bg-orange-950/30 border-orange-700 text-orange-300{% elif alerte.niveau == 'success' %}bg-emerald-950/30 border-emerald-700 text-emerald-300{% else %}bg-blue-950/30 border-blue-700 text-blue-300{% endif %}">
-    <span class="text-lg flex-shrink-0">{{ alerte.icone }}</span>
+{% macro alert_banner_compact(alerte) %}
+<div class="flex items-start gap-2 p-3 rounded-lg border backdrop-blur-sm {% if alerte.niveau == 'warning' %}bg-orange-950/30 border-orange-700 text-orange-300{% elif alerte.niveau == 'success' %}bg-emerald-950/30 border-emerald-700 text-emerald-300{% else %}bg-blue-950/30 border-blue-700 text-blue-300{% endif %}">
+    <span class="text-sm flex-shrink-0 mt-0.5">
+        {% if alerte.niveau == 'warning' %}
+            {{ icons.icon("exclamation-circle", "16") }}
+        {% elif alerte.niveau == 'success' %}
+            {{ icons.icon("check-circle", "16") }}
+        {% else %}
+            {{ icons.icon("info-circle", "16") }}
+        {% endif %}
+    </span>
     <div class="flex-1 text-sm leading-relaxed">{{ alerte.message }}</div>
     {% if alerte.lien %}
-    <a href="{{ alerte.lien }}" class="ml-3 text-xs underline opacity-70 hover:opacity-100 flex-shrink-0 whitespace-nowrap font-medium">
+    <a href="{{ alerte.lien }}" class="text-xs underline opacity-70 hover:opacity-100 flex-shrink-0 whitespace-nowrap font-medium">
         Résoudre →
     </a>
     {% endif %}
 </div>
 {% endmacro %}
 
-{# === SECTIONS === #}
+{# ===== STAT LINE (pour résumé) ===== #}
 
-{# Section compacte avec titre et contenu #}
-{% macro section_card(title, icon=None) %}
-<div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-    {% if title %}
-    <div class="flex items-center gap-2 mb-5">
-        {% if icon %}<span class="text-lg">{{ icon }}</span>{% endif %}
-        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest">{{ title }}</h2>
+{% macro stat_line(label, value, icon_name=None, color_class="text-gray-400") %}
+<div class="flex justify-between items-center py-2">
+    <div class="flex items-center gap-2 text-sm">
+        {% if icon_name %}{{ icons.icon(icon_name, "16", class="text-gray-600") }}{% endif %}
+        <span class="text-gray-400">{{ label }}</span>
     </div>
-    {% endif %}
-    {{ caller() }}
+    <span class="valeur text-sm font-semibold {{ color_class }}">{{ value }}</span>
 </div>
+{% endmacro %}
+
+{# ===== TABLE ROW COMPACT ===== #}
+
+{% macro table_row_mouvement(mouvement) %}
+<tr class="border-b border-gray-800 hover:bg-gray-800/50 transition">
+    <td class="py-2 px-3 text-xs text-gray-500">{{ mouvement.date_mouvement.strftime("%d/%m") }}</td>
+    <td class="py-2 px-3 text-xs text-gray-400">{{ mouvement.categorie or "—" }}</td>
+    <td class="py-2 px-3 text-right text-sm font-semibold {% if mouvement.type.value == 'Entrée' %}text-emerald-400{% else %}text-red-400{% endif %}">
+        {% if mouvement.type.value == 'Entrée' %}+{% else %}-{% endif %}{{ "%.0f"|format(mouvement.montant) }} €
+    </td>
+</tr>
 {% endmacro %}
