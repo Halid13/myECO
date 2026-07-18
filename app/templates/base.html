@@ -3,27 +3,64 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
     <title>FinanSmart — {% block title %}{% endblock %}</title>
-    <!-- Tailwind CSS (CDN pour le développement) -->
+    
+    <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            975: '#020812',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    
+    <!-- CSS personnalisé -->
+    <link rel="stylesheet" href="/static/css/custom.css" />
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen font-sans">
+<body class="bg-slate-950 text-gray-100 min-h-screen font-sans">
 
     <!-- Navigation principale -->
-    <nav class="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-6">
-        <span class="text-emerald-400 font-bold text-lg tracking-wide">💰 FinanSmart</span>
-        <a href="/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Dashboard</a>
-        <a href="/comptes/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Mouvements</a>
-        <a href="/patrimoine/" class="text-sm text-gray-300 hover:text-emerald-400 transition">Patrimoine</a>
+    <nav class="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 group">
+                <span class="text-2xl">💰</span>
+                <span class="text-emerald-400 font-bold text-lg tracking-tight group-hover:text-emerald-300 transition">FinanSmart</span>
+            </a>
+            
+            <div class="flex items-center gap-6">
+                <a href="/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Dashboard</a>
+                <a href="/comptes/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Mouvements</a>
+                <a href="/patrimoine/" class="text-sm text-gray-400 hover:text-emerald-400 transition">Patrimoine</a>
+            </div>
+        </div>
     </nav>
 
     <!-- Contenu principal -->
-    <main class="max-w-6xl mx-auto px-6 py-8">
+    <main class="max-w-7xl mx-auto px-6 py-8">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-900 bg-gray-950 mt-16 py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center text-xs text-gray-600">
+            <p>FinanSmart v1.0 — Gestion financière 100% locale et souveraine</p>
+        </div>
+    </footer>
 
 </body>
 </html>

@@ -1,1 +1,173 @@
-/* Fichier réservé pour les styles personnalisés (complément à Tailwind) */
+/* ===== TYPOGRAPHIE MONOSPACE POUR LES MONTANTS ===== */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+.valeur {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    transition: filter 0.2s ease;
+}
+
+.valeur.blur-sm {
+    filter: blur(6px);
+    user-select: none;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.fade-in-up {
+    animation: fade-in-up 0.5s ease-out;
+}
+
+/* ===== CARTES BANCAIRES ===== */
+.bank-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.bank-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #10b981, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.bank-card:hover::before {
+    opacity: 1;
+}
+
+/* ===== JAUGES CIRCULAIRES ===== */
+svg circle {
+    transition: stroke-dasharray 0.5s ease, stroke 0.3s ease;
+}
+
+svg text {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== TABLEAUX ===== */
+table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: rgba(55, 65, 81, 0.5);
+}
+
+/* ===== ALERTES ===== */
+.alert-slide-in {
+    animation: fade-in-up 0.4s ease-out;
+}
+
+.alert-banner {
+    transition: all 0.3s ease;
+}
+
+.alert-banner:hover {
+    transform: translateX(4px);
+}
+
+/* ===== BUTTON HOVER STATES ===== */
+button, a.btn {
+    transition: all 0.2s ease;
+}
+
+button:active, a.btn:active {
+    transform: scale(0.98);
+}
+
+/* ===== INPUTS ===== */
+input, select, textarea {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* ===== SCROLLBAR PERSONNALISÉE ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(107, 114, 128, 0.6);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.8);
+}
+
+/* ===== GRADIENTS ===== */
+.bg-gradient-invest {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+.bg-gradient-epargne {
+    background: linear-gradient(135deg, #312e81 0%, #1f1535 100%);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+    .valeur {
+        font-size: 0.875rem;
+    }
+    
+    svg {
+        width: 80px !important;
+        height: 80px !important;
+    }
+}
+
+/* ===== DARK MODE UTILITIES ===== */
+.glass {
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.glass:hover {
+    background: rgba(17, 24, 39, 0.9);
+    border-color: rgba(75, 85, 99, 0.5);
+}
+
+/* ===== ÉTAT DE CHARGEMENT ===== */
+.loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 6px;
+    background: linear-gradient(90deg, transparent 0%, #10b981 50%, transparent 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 1.5s infinite;
+}

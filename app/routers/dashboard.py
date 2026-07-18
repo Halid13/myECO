@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.compte import Compte
+from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
@@ -18,6 +19,7 @@ def _build_dashboard_context(db: Session) -> dict:
     abonnements = db.query(Abonnement).filter(Abonnement.actif == True).all()
     objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
     placements = db.query(Placement).all()
+    mouvements = db.query(Mouvement).order_by(Mouvement.date_mouvement.desc()).limit(20).all()
 
     total_liquidites = sum(c.solde for c in comptes)
     total_epargne = sum(o.montant_actuel for o in objectifs)
@@ -43,6 +45,7 @@ def _build_dashboard_context(db: Session) -> dict:
 
     return {
         "comptes": comptes,
+        "mouvements": mouvements,
         "total_liquidites": round(total_liquidites, 2),
         "total_epargne": round(total_epargne, 2),
         "total_investissements": round(total_investissements, 2),
