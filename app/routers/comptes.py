@@ -1,25 +1,99 @@
-from fastapi import APIRouter, Request, Depends
+from datetime import datetime, timezone
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.compte import Compte
+from app.models.mouvement import Mouvement
+from app.schemas.compte import CompteCreate, CompteRead, CompteUpdate
+from app.schemas.mouvement import MouvementCreate, MouvementRead
 
-router = APIRouter(prefix="/comptes", tags=["Comptes"])
+router = APIRouter(tags=["Comptes"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/", summary="Page Mouvements & Comptes")
+@router.get("/comptes/", summary="Page Mouvements & Comptes")
 def page_comptes(request: Request, db: Session = Depends(get_db)):
-    # TODO : charger les comptes et mouvements
-    return templates.TemplateResponse("mouvements.html", {"request": request})
+    comptes = db.query(Compte).all()
+    mouvements = db.query(Mouvement).order_by(Mouvement.date_mouvement.desc()).limit(50).all()
+    return templates.TemplateResponse("mouvements.html", {
+        "request": request,
+        "comptes": comptes,
+        "mouvements": mouvements,
+    })
 
 
-@router.post("/api/v1/mouvements", summary="Enregistrer un mouvement")
-def creer_mouvement(db: Session = Depends(get_db)):
-    # TODO
-    pass
+# --- Comptes ---
+
+@router.get("/api/v1/comptes", response_model=list[CompteRead], summary="Lister les comptes")
+def lister_comptes(db: Session = Depends(get_db)):
+    return db.query(Compte).all()
 
 
-@router.put("/api/v1/comptes/solde", summary="Ajuster le solde d'un compte")
-def ajuster_solde(db: Session = Depends(get_db)):
-    # TODO
-    pass
+@router.post("/api/v1/comptes", response_model=CompteRead, status_code=201, summary="Créer un compte")
+def creer_compte(payload: CompteCreate, db: Session = Depends(get_db)):
+    compte = Compte(**payload.model_dump())
+    db.add(compte)
+    db.commit()
+    db.refresh(compte)
+    return compte
+
+
+@router.put("/api/v1/comptes/{compte_id}/solde", response_model=CompteRead, summary="Ajuster le solde")
+def ajuster_solde(compte_id: int, payload: CompteUpdate, db: Session = Depends(get_db)):
+    compte = db.get(Compte, compte_id)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+    compte.solde = payload.solde
+    compte.date_maj = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(compte)
+    return compte
+
+
+@router.delete("/api/v1/comptes/{compte_id}", status_code=204, summary="Supprimer un compte")
+def supprimer_compte(compte_id: int, db: Session = Depends(get_db)):
+    compte = db.get(Compte, compte_id)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+    db.delete(compte)
+    db.commit()
+
+
+# --- Mouvements ---
+
+@router.get("/api/v1/mouvements", response_model=list[MouvementRead], summary="Lister les mouvements")
+def lister_mouvements(compte_id: int | None = None, db: Session = Depends(get_db)):
+    q = db.query(Mouvement)
+    if compte_id:
+        q = q.filter(Mouvement.id_compte == compte_id)
+    return q.order_by(Mouvement.date_mouvement.desc()).all()
+
+
+@router.post("/api/v1/mouvements", response_model=MouvementRead, status_code=201, summary="Enregistrer un mouvement")
+def creer_mouvement(payload: MouvementCreate, db: Session = Depends(get_db)):
+    compte = db.get(Compte, payload.id_compte)
+    if not compte:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+    mouvement = Mouvement(**payload.model_dump())
+    if mouvement.date_mouvement is None:
+        mouvement.date_mouvement = datetime.now(timezone.utc)
+    # Mise à jour du solde du compte
+    if mouvement.type.value == "Entrée":
+        compte.solde += mouvement.montant
+    else:
+        compte.solde -= mouvement.montant
+    compte.date_maj = datetime.now(timezone.utc)
+    db.add(mouvement)
+    db.commit()
+    db.refresh(mouvement)
+    return mouvement
+
+
+@router.delete("/api/v1/mouvements/{mouvement_id}", status_code=204, summary="Supprimer un mouvement")
+def supprimer_mouvement(mouvement_id: int, db: Session = Depends(get_db)):
+    mouvement = db.get(Mouvement, mouvement_id)
+    if not mouvement:
+        raise HTTPException(status_code=404, detail="Mouvement introuvable")
+    db.delete(mouvement)
+    db.commit()
