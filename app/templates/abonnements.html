@@ -95,19 +95,25 @@
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
             {{ icons.icon("plus", "16") }} Ajouter un abonnement
         </p>
-        <form hx-post="/api/v1/abonnements" hx-target="body" hx-push-url="/abonnements/">
+        <form hx-post="/api/v1/abonnements" 
+              hx-on::after-request="if(event.detail.xhr.status === 201) { location.reload(); }">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <input name="libelle" placeholder="Nom (Netflix, EDF, Salle de sport…)" required
                     class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
                 <input name="montant" type="number" step="0.01" min="0.01" placeholder="Montant (€)" required
                     class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
-                <select name="categorie"
-                    class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
-                    <option value="">— Catégorie —</option>
-                    {% for cat in categories_liste %}
-                    <option value="{{ cat }}">{{ cat }}</option>
-                    {% endfor %}
-                </select>
+                <div class="relative">
+                    <select id="categorie-select" name="categorie" onchange="toggleCustomCategorie()"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <option value="">— Catégorie —</option>
+                        {% for cat in categories_liste %}
+                        <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                        <option value="__custom__">Autre (personnalisée)</option>
+                    </select>
+                    <input id="custom-categorie" name="categorie_custom" type="text" placeholder="Votre catégorie personnalisée" 
+                        class="hidden w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
+                </div>
                 <select name="frequence"
                     class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
                     <option value="Mensuelle">Mensuelle</option>
@@ -323,6 +329,41 @@
 <!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function toggleCustomCategorie() {
+    const select = document.getElementById('categorie-select');
+    const customInput = document.getElementById('custom-categorie');
+    
+    if (select.value === '__custom__') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+    } else {
+        customInput.classList.add('hidden');
+    }
+}
+
+// Gérer l'envoi du formulaire pour la catégorie personnalisée
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('#form-panel form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const select = document.getElementById('categorie-select');
+            const customInput = document.getElementById('custom-categorie');
+            
+            if (select.value === '__custom__') {
+                // Si "Autre" est sélectionné, utiliser la valeur du champ personnalisé
+                if (!customInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Veuillez entrer une catégorie personnalisée');
+                    customInput.focus();
+                    return;
+                }
+                // Remplacer la valeur du select avec la catégorie personnalisée
+                select.value = customInput.value;
+            }
+        });
+    }
+});
+
 {% if categories %}
 const catCtx = document.getElementById('categoriesChart');
 if (catCtx) {
