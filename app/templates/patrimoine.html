@@ -300,8 +300,11 @@
             </button>
         </div>
         <form onsubmit="return creerPlacement(event)" class="p-4 space-y-3">
-            <input name="nom_support" placeholder="Nom (ex: ETF World, PEA Bourso…)" required
-                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+            <div>
+                <label class="text-[11px] text-gray-500 uppercase tracking-widest">Nom du placement</label>
+                <input name="nom_support" placeholder="Ex: ETF World, PEA Bourso…" required
+                    class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-yellow-500" />
+            </div>
             <select name="type_actif" required
                 class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500">
                 {% for t in types_actifs %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
