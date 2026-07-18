@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from app.database import Base
@@ -21,7 +21,7 @@ class HistoriqueEpargne(Base):
     __tablename__ = "historique_epargne"
 
     id = Column(Integer, primary_key=True, index=True)
-    id_objectif = Column(Integer, ForeignKey="objectif_epargne.id")
+    id_objectif = Column(Integer, ForeignKey("objectif_epargne.id"), nullable=False)
     montant = Column(Float, nullable=False)
     date_operation = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
