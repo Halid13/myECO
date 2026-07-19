@@ -42,11 +42,11 @@
                 <div id="onboarding-comptes" class="space-y-4">
                     <!-- Bloc compte (répétable) -->
                     <div class="onboarding-compte border border-gray-800 rounded-lg p-3">
-                        <div class="flex gap-2">
-                            {{ icons.icon("landmark", "16", class="text-gray-600 mt-2.5 flex-shrink-0") }}
-                            <input type="text" placeholder="Nom de la banque (ex: BNP)" class="compte-nom flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
-                            <input type="number" step="0.01" placeholder="Solde (€)" class="compte-solde w-28 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
-                            <button type="button" onclick="retirerCompte(this)" title="Retirer cette banque" class="text-gray-700 hover:text-red-400 transition px-1">
+                        <div class="flex gap-2 items-center">
+                            {{ icons.icon("landmark", "16", class="text-gray-600 flex-shrink-0") }}
+                            <input type="text" placeholder="Nom de la banque (ex: BNP)" class="compte-nom flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
+                            <input type="number" step="0.01" placeholder="Solde (€)" class="compte-solde w-28 flex-shrink-0 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
+                            <button type="button" onclick="retirerCompte(this)" title="Retirer cette banque" class="text-gray-700 hover:text-red-400 transition px-1 flex-shrink-0">
                                 {{ icons.icon("x-circle", "16") }}
                             </button>
                         </div>
@@ -171,18 +171,24 @@
         btn.closest('.onboarding-compte').remove();
     }
 
-    const ICONE_FLAG = `{{ icons.icon("flag", "13", class="text-purple-400 mt-2.5 flex-shrink-0") }}`;
+    const ICONE_FLAG = `{{ icons.icon("flag", "13", class="text-purple-400 flex-shrink-0") }}`;
     const ICONE_RETRAIT = `{{ icons.icon("x-circle", "14") }}`;
 
     function creerBlocEpargne() {
         const div = document.createElement('div');
-        div.className = 'onboarding-epargne flex gap-2 items-start';
+        div.className = 'onboarding-epargne flex gap-2 items-center';
         div.innerHTML = `
             ${ICONE_FLAG}
-            <input type="text" placeholder="Nom de l'objectif (ex: Livret Jeune)" class="epargne-nom flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-            <input type="number" step="0.01" placeholder="Objectif (€)" class="epargne-cible w-24 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-            <input type="number" step="0.01" placeholder="Fonds actuel (€)" class="epargne-actuel w-24 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
-            <button type="button" title="Retirer" class="text-gray-700 hover:text-red-400 transition px-1 pt-1">
+            <input type="text" placeholder="Nom de l'objectif (ex: Livret Jeune)" class="epargne-nom flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            <div class="flex flex-col gap-0.5 w-24 flex-shrink-0">
+                <span class="text-[9px] text-gray-600 uppercase tracking-wide px-0.5">Objectif</span>
+                <input type="number" step="0.01" placeholder="10000" class="epargne-cible w-full bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            </div>
+            <div class="flex flex-col gap-0.5 w-24 flex-shrink-0">
+                <span class="text-[9px] text-gray-600 uppercase tracking-wide px-0.5">Fonds actuel</span>
+                <input type="number" step="0.01" placeholder="0" class="epargne-actuel w-full bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            </div>
+            <button type="button" title="Retirer" class="text-gray-700 hover:text-red-400 transition px-1 flex-shrink-0">
                 ${ICONE_RETRAIT}
             </button>
         `;
