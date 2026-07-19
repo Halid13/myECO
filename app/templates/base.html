@@ -222,7 +222,60 @@
             panel.classList.add('hidden');
         }
     });
+
+    // ===== CONFIRMATION (remplace window.confirm() par une modale intégrée) =====
+    // Usage : const ok = await confirmerAction({ titre, message, labelConfirmer });
+    // Résout à true si l'utilisateur confirme, false s'il annule/ferme la modale.
+    let _confirmResolve = null;
+
+    function confirmerAction({ titre = 'Confirmer', message = '', labelConfirmer = 'Confirmer', labelAnnuler = 'Annuler' } = {}) {
+        document.getElementById('confirm-modal-titre').textContent = titre;
+        document.getElementById('confirm-modal-message').textContent = message;
+        document.getElementById('confirm-modal-btn-confirmer').textContent = labelConfirmer;
+        document.getElementById('confirm-modal-btn-annuler').textContent = labelAnnuler;
+        document.getElementById('confirm-modal').classList.remove('hidden');
+        return new Promise((resolve) => { _confirmResolve = resolve; });
+    }
+
+    function _confirmModalRepondre(reponse) {
+        document.getElementById('confirm-modal').classList.add('hidden');
+        if (_confirmResolve) {
+            _confirmResolve(reponse);
+            _confirmResolve = null;
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
+            _confirmModalRepondre(false);
+        }
+    });
     </script>
+
+    <!-- ==================== MODAL PARTAGÉE : CONFIRMATION ==================== -->
+    <div id="confirm-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4"
+         onclick="if (event.target === this) _confirmModalRepondre(false)">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm">
+            <div class="flex items-center gap-2 p-4 border-b border-gray-800">
+                {{ icons.icon("x-circle", "18", class="text-red-400") }}
+                <h3 id="confirm-modal-titre" class="text-sm font-semibold text-white">Confirmer</h3>
+            </div>
+            <div class="p-4">
+                <p id="confirm-modal-message" class="text-sm text-gray-400"></p>
+            </div>
+            <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+                <button type="button" id="confirm-modal-btn-annuler" onclick="_confirmModalRepondre(false)"
+                    class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg px-4 py-2 transition">
+                    Annuler
+                </button>
+                <button type="button" id="confirm-modal-btn-confirmer" onclick="_confirmModalRepondre(true)"
+                    class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

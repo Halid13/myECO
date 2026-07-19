@@ -423,7 +423,12 @@ async function epargnerSurObjectif(event, objectifId) {
 async function cloturerObjectif(btn) {
     const id = btn.dataset.id;
     const nom = btn.dataset.nom;
-    if (!confirm(`Clôturer l'objectif "${nom}" ? Il ne sera plus affiché mais son historique est conservé.`)) return;
+    const ok = await confirmerAction({
+        titre: "Clôturer l'objectif",
+        message: `Clôturer l'objectif "${nom}" ? Il ne sera plus affiché mais son historique est conservé.`,
+        labelConfirmer: 'Clôturer',
+    });
+    if (!ok) return;
     const res = await fetch(`/api/v1/epargne/${id}`, { method: 'DELETE' });
     if (res.ok) {
         location.reload();
@@ -521,7 +526,12 @@ async function enregistrerMetadonneesPlacement() {
 async function supprimerPlacementActuel() {
     const id = document.getElementById('gp-id').value;
     const nom = document.getElementById('gp-nom').value;
-    if (!confirm(`Supprimer le placement "${nom}" ? Cette action est irréversible.`)) return;
+    const ok = await confirmerAction({
+        titre: 'Supprimer le placement',
+        message: `Supprimer le placement "${nom}" ? Cette action est irréversible.`,
+        labelConfirmer: 'Supprimer',
+    });
+    if (!ok) return;
     const res = await fetch(`/api/v1/investissements/${id}`, { method: 'DELETE' });
     if (res.ok) {
         location.reload();

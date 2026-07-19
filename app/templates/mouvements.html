@@ -374,7 +374,12 @@ async function enregistrerEditionCompte(event) {
 async function supprimerCompteActuel() {
     const id = document.getElementById('edit-compte-id').value;
     const nom = document.getElementById('edit-compte-nom').value;
-    if (!confirm(`Supprimer le compte "${nom}" ? Ses mouvements et abonnements liés seront aussi supprimés.`)) return;
+    const ok = await confirmerAction({
+        titre: 'Supprimer le compte',
+        message: `Supprimer le compte "${nom}" ? Ses mouvements et abonnements liés seront aussi supprimés.`,
+        labelConfirmer: 'Supprimer',
+    });
+    if (!ok) return;
     const res = await fetch(`/api/v1/comptes/${id}`, { method: 'DELETE' });
     if (res.ok) {
         location.reload();
