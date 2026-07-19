@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
 from app.models.compte import Compte
+from app.models.mouvement import Mouvement, TypeMouvement
 from app.schemas.epargne import ObjectifEpargneRead
 from app.services.finances import CHART_COLORS
 from app.services.epargne import (
@@ -119,6 +120,15 @@ def update_epargne(
         if compte:
             compte.solde = round(compte.solde - montant, 2)
             compte.date_maj = datetime.now(timezone.utc)
+
+            mouvement = Mouvement(
+                id_compte=compte.id,
+                type=TypeMouvement.sortie if montant > 0 else TypeMouvement.entree,
+                montant=abs(montant),
+                categorie="Épargne",
+                description=f"{'Épargne vers' if montant > 0 else 'Retrait depuis'} \"{objectif.nom}\"",
+            )
+            db.add(mouvement)
 
     historique = HistoriqueEpargne(id_objectif=objectif_id, montant=montant)
     db.add(historique)

@@ -18,6 +18,14 @@
     </div>
 </div>
 
+<style>
+.carousel-scrollbar { scrollbar-width: thin; scrollbar-color: #374151 transparent; }
+.carousel-scrollbar::-webkit-scrollbar { height: 6px; }
+.carousel-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.carousel-scrollbar::-webkit-scrollbar-thumb { background-color: #374151; border-radius: 9999px; }
+.carousel-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #4b5563; }
+</style>
+
 <!-- ==================== SECTION 1 : VUE DES COMPTES ==================== -->
 <section class="mb-6">
     <div class="flex items-center justify-between mb-3">
@@ -33,9 +41,11 @@
     </div>
 
     {% if comptes %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-1 pb-2 -mx-1 px-1 carousel-scrollbar">
         {% for c in comptes %}
-        {{ components.bank_card_realistic(c, active=(filtre_compte_id == c.id)) }}
+        <div class="snap-start shrink-0 w-[280px] sm:w-[300px]">
+            {{ components.bank_card_realistic(c, active=(filtre_compte_id == c.id)) }}
+        </div>
         {% endfor %}
     </div>
     {% else %}
