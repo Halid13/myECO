@@ -5,6 +5,7 @@ __pycache__/
 .env
 venv/
 .venv/
+CLAUDE.md
 
 # Base de données SQLite (données personnelles, jamais versionnées)
 data/*.db

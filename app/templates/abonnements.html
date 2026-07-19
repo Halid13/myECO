@@ -351,16 +351,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const select = document.getElementById('categorie-select');
             const customInput = document.getElementById('custom-categorie');
 
+            // Repart d'un état propre à chaque tentative (utile si un envoi précédent a échoué
+            // côté serveur sans recharger la page).
+            select.disabled = false;
+            customInput.name = 'categorie_custom';
+
             if (select.value === '__custom__') {
-                // Si "Autre" est sélectionné, utiliser la valeur du champ personnalisé
+                // Si "Autre" est sélectionné, utiliser la valeur du champ personnalisé.
+                // Un <select> ne peut pas recevoir une valeur arbitraire via .value = "..." —
+                // ça échoue silencieusement et "__custom__" partait tel quel côté serveur.
+                // On désactive donc le select (exclu de l'envoi) et on fait porter le nom
+                // "categorie" par le champ texte personnalisé à la place.
                 if (!customInput.value.trim()) {
                     e.preventDefault();
                     alert('Veuillez entrer une catégorie personnalisée');
                     customInput.focus();
                     return;
                 }
-                // Remplacer la valeur du select avec la catégorie personnalisée
-                select.value = customInput.value;
+                select.disabled = true;
+                customInput.name = 'categorie';
             }
         });
     }
