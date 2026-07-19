@@ -6,10 +6,9 @@ from app.database import get_db
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
 from app.models.compte import Compte
 from app.schemas.epargne import ObjectifEpargneRead
-from app.services.finances import calculer_revenus_mois, CHART_COLORS
+from app.services.finances import CHART_COLORS
 from app.services.epargne import (
     effort_epargne_mois,
-    taux_epargne_mensuel,
     estimation_mois_restants,
     evolution_epargne,
 )
@@ -34,8 +33,6 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
 
     total_epargne = round(sum(o.montant_actuel for o in objectifs), 2)
     effort = effort_epargne_mois(db, today)
-    revenus_mois = calculer_revenus_mois(db, today)
-    taux_epargne = taux_epargne_mensuel(effort["mois"], revenus_mois)
     top_proches = sorted(
         [o for o in objectifs if o.progression_pct < 100],
         key=lambda o: o.progression_pct,
@@ -50,8 +47,6 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         "effort_mois": effort["mois"],
         "effort_mois_precedent": effort["mois_precedent"],
         "delta_effort_pct": effort["delta_pct"],
-        "taux_epargne": taux_epargne,
-        "revenus_mois": round(revenus_mois, 2),
         "evolution": evolution_epargne(db, today=today),
         "top_proches": top_proches,
         "chart_colors": CHART_COLORS,

@@ -35,13 +35,6 @@ def effort_epargne_mois(db: Session, today: date | None = None) -> dict:
     }
 
 
-def taux_epargne_mensuel(effort_mois: float, revenus_mois: float) -> float:
-    """Pourcentage des revenus du mois qui a été épargné."""
-    if revenus_mois <= 0:
-        return 0.0
-    return round(effort_mois / revenus_mois * 100, 1)
-
-
 def estimation_mois_restants(objectif: ObjectifEpargne) -> int | None:
     """Nombre de mois estimé pour atteindre la cible, au rythme net moyen des 3 derniers
     mois d'activité (ou de tout l'historique si moins de 3 mois de données).

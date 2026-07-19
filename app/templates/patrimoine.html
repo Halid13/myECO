@@ -12,7 +12,7 @@
 </div>
 
 <!-- ==================== BANDEAU D'EFFORT D'ÉPARGNE ==================== -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
 
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("banknotes", "18", class="mb-2 text-purple-400") }}
@@ -27,16 +27,6 @@
             {% endif %}
         </div>
         <p class="text-[11px] text-gray-600 mt-1">vs {{ "%.0f"|format(effort_mois_precedent) }} € le mois dernier</p>
-    </div>
-
-    <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        {{ icons.icon("chart-pie", "18", class="mb-2 text-blue-400") }}
-        <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Taux d'épargne</p>
-        <div class="flex items-baseline gap-1">
-            <p class="valeur text-xl font-bold text-blue-400">{{ "%.0f"|format(taux_epargne) }}</p>
-            <span class="text-xs text-gray-600">%</span>
-        </div>
-        <p class="text-[11px] text-gray-600 mt-1">des revenus ({{ "%.0f"|format(revenus_mois) }} € ce mois-ci)</p>
     </div>
 
     {{ components.kpi_mini("Total épargné", total_epargne, "€", "flag", "purple") }}

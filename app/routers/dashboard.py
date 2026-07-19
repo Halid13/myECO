@@ -9,7 +9,6 @@ from app.models.abonnement import Abonnement
 from app.models.epargne import ObjectifEpargne
 from app.models.placement import Placement
 from app.services.finances import calculer_revenus_mois, calculer_charges_mensuelles
-from app.services.assistant import executer_moteur
 
 router = APIRouter(tags=["Dashboard"])
 
@@ -62,13 +61,10 @@ def _build_dashboard_context(db: Session) -> dict:
             prochains.append(a)
     prochains.sort(key=lambda a: a.jours_restants)
 
-    recommandations = executer_moteur(db, today)
-
     return {
         "comptes": comptes,
         "abonnements": abonnements,
         "mouvements": mouvements,
-        "recommandations": recommandations,
         "total_liquidites": round(total_liquidites, 2),
         "total_epargne": round(total_epargne, 2),
         "total_investissements": round(total_investissements, 2),
