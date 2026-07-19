@@ -14,14 +14,22 @@ from app.services.finances import calculer_revenus_mois
 router = APIRouter(tags=["Comptes"])
 templates = Jinja2Templates(directory="app/templates")
 
+PAGE_SIZE = 6
+
 
 @router.get("/comptes/", summary="Page Mouvements & Comptes")
-def page_comptes(request: Request, compte_id: int | None = None, db: Session = Depends(get_db)):
+def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, db: Session = Depends(get_db)):
     comptes = db.query(Compte).all()
     q = db.query(Mouvement)
     if compte_id:
         q = q.filter(Mouvement.id_compte == compte_id)
-    mouvements = q.order_by(Mouvement.date_mouvement.desc()).limit(100).all()
+    q = q.order_by(Mouvement.date_mouvement.desc())
+
+    nb_mouvements = q.count()
+    nb_pages = max(1, -(-nb_mouvements // PAGE_SIZE))
+    page = min(max(1, page), nb_pages)
+    mouvements = q.offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).all()
+
     total_liquidites = sum(c.solde for c in comptes)
     objectifs_epargne = (
         db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
@@ -30,6 +38,8 @@ def page_comptes(request: Request, compte_id: int | None = None, db: Session = D
         "request": request,
         "comptes": comptes,
         "mouvements": mouvements,
+        "page": page,
+        "nb_pages": nb_pages,
         "total_liquidites": round(total_liquidites, 2),
         "filtre_compte_id": compte_id,
         "revenus_mois": round(calculer_revenus_mois(db, date.today()), 2),

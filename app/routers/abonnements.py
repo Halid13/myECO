@@ -32,14 +32,23 @@ MOIS_FR = [
 JOURS_SEMAINE_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
 
+PAGE_SIZE = 6
+
+
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
-def page_abonnements(request: Request, db: Session = Depends(get_db)):
+def page_abonnements(request: Request, page: int = 1, db: Session = Depends(get_db)):
     abonnements = (
         db.query(Abonnement)
         .filter(Abonnement.actif == True)
         .order_by(Abonnement.jour_prelevement)
         .all()
     )
+
+    nb_pages = max(1, -(-len(abonnements) // PAGE_SIZE))
+    page = min(max(1, page), nb_pages)
+    debut = (page - 1) * PAGE_SIZE
+    abonnements_page = abonnements[debut:debut + PAGE_SIZE]
+
     today = date.today()
     premier_jour_semaine, days_in_month = calendar.monthrange(today.year, today.month)
     mois_annee_fr = f"{MOIS_FR[today.month - 1].capitalize()} {today.year}"
@@ -78,7 +87,9 @@ def page_abonnements(request: Request, db: Session = Depends(get_db)):
 
     return templates.TemplateResponse("abonnements.html", {
         "request": request,
-        "abonnements": abonnements,
+        "abonnements": abonnements_page,
+        "page": page,
+        "nb_pages": nb_pages,
         "comptes_list": db.query(Compte).all(),
         "prochains": prochains,
         "total_mensuel": total_mensuel,

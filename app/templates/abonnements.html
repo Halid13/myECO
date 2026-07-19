@@ -314,6 +314,23 @@
                 <span class="valeur text-sm font-bold text-orange-400">- {{ "%.2f"|format(total_mensuel) }} €</span>
             </div>
 
+            <!-- Pagination -->
+            {% if nb_pages > 1 %}
+            <div class="border-t border-gray-800 px-3 py-2 flex justify-between items-center">
+                <a href="{{ '?page=' ~ (page - 1) if page > 1 else '#' }}"
+                   class="text-xs font-medium px-2 py-1 rounded transition
+                       {% if page > 1 %}text-gray-300 hover:bg-gray-800{% else %}text-gray-700 pointer-events-none{% endif %}">
+                    ← Précédent
+                </a>
+                <span class="text-xs text-gray-500">Page {{ page }} / {{ nb_pages }}</span>
+                <a href="{{ '?page=' ~ (page + 1) if page < nb_pages else '#' }}"
+                   class="text-xs font-medium px-2 py-1 rounded transition
+                       {% if page < nb_pages %}text-gray-300 hover:bg-gray-800{% else %}text-gray-700 pointer-events-none{% endif %}">
+                    Suivant →
+                </a>
+            </div>
+            {% endif %}
+
             {% else %}
             <div class="py-16 text-center">
                 {{ icons.icon("repeat", "36", class="mx-auto mb-3 text-gray-800") }}
