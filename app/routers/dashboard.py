@@ -1,5 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Request, Depends
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -79,6 +80,8 @@ def _build_dashboard_context(db: Session) -> dict:
 
 @router.get("/", summary="Page principale — Dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
+    if db.query(Compte).count() == 0:
+        return RedirectResponse("/onboarding")
     context = _build_dashboard_context(db)
     context["request"] = request
     return templates.TemplateResponse("index.html", context)
