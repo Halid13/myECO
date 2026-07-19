@@ -17,15 +17,7 @@
     <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
         {{ icons.icon("banknotes", "18", class="mb-2 text-purple-400") }}
         <p class="text-[11px] text-gray-500 uppercase tracking-widest mb-1">Épargné ce mois</p>
-        <div class="flex items-baseline gap-2 flex-wrap">
-            <p class="valeur text-xl font-bold text-purple-400">{{ "%.0f"|format(effort_mois) }} €</p>
-            {% if delta_effort_pct != 0 %}
-            <span class="text-[11px] font-semibold flex items-center gap-0.5 {% if delta_effort_pct >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-                {% if delta_effort_pct >= 0 %}{{ icons.icon("arrow-up-right", "10") }}+{{ delta_effort_pct }}%
-                {% else %}{{ icons.icon("arrow-down-left", "10") }}{{ delta_effort_pct }}%{% endif %}
-            </span>
-            {% endif %}
-        </div>
+        <p class="valeur text-xl font-bold text-purple-400">{{ "%.0f"|format(effort_mois) }} €</p>
         <p class="text-[11px] text-gray-600 mt-1">vs {{ "%.0f"|format(effort_mois_precedent) }} € le mois dernier</p>
     </div>
 

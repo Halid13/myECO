@@ -47,7 +47,6 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         "total_epargne": total_epargne,
         "effort_mois": effort["mois"],
         "effort_mois_precedent": effort["mois_precedent"],
-        "delta_effort_pct": effort["delta_pct"],
         "evolution": evolution_epargne(db, today=today),
         "top_proches": top_proches,
         "chart_colors": CHART_COLORS,
