@@ -298,9 +298,7 @@
                         <td class="py-2 px-3 text-gray-400 hidden lg:table-cell">{{ a.compte.nom_banque }}</td>
                         <td class="py-2 px-3 text-right font-bold text-orange-400">- {{ "%.2f"|format(a.montant) }} €</td>
                         <td class="py-2 px-3 text-right">
-                            <button hx-delete="/api/v1/abonnements/{{ a.id }}"
-                                    hx-target="body" hx-push-url="/abonnements/"
-                                    hx-confirm="Résilier '{{ a.libelle }}' ?"
+                            <button onclick="ouvrirModalSuppression('{{ a.id }}', '{{ a.libelle|e }}')"
                                     class="text-gray-600 hover:text-red-400 transition p-1 rounded">
                                 {{ icons.icon("x-circle", "14") }}
                             </button>
@@ -328,9 +326,67 @@
     </div>
 </div>
 
+<!-- ==================== MODAL : CONFIRMATION SUPPRESSION ==================== -->
+<div id="modal-suppression-abonnement" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerModalSuppression()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm">
+        <div class="flex items-center gap-2 p-4 border-b border-gray-800">
+            {{ icons.icon("x-circle", "18", class="text-red-400") }}
+            <h3 class="text-sm font-semibold text-white">Résilier l'abonnement</h3>
+        </div>
+        <div class="p-4">
+            <p class="text-sm text-gray-400">
+                Résilier <span id="modal-suppression-libelle" class="text-white font-medium"></span> ?
+                Cette action est définitive.
+            </p>
+        </div>
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+            <button type="button" onclick="fermerModalSuppression()"
+                class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg px-4 py-2 transition">
+                Annuler
+            </button>
+            <button type="button" onclick="confirmerSuppressionAbonnement()"
+                class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+                Résilier
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+let abonnementASupprimer = null;
+
+function ouvrirModalSuppression(id, libelle) {
+    abonnementASupprimer = id;
+    document.getElementById('modal-suppression-libelle').textContent = `"${libelle}"`;
+    document.getElementById('modal-suppression-abonnement').classList.remove('hidden');
+}
+
+function fermerModalSuppression() {
+    abonnementASupprimer = null;
+    document.getElementById('modal-suppression-abonnement').classList.add('hidden');
+}
+
+async function confirmerSuppressionAbonnement() {
+    if (!abonnementASupprimer) return;
+    const res = await fetch(`/api/v1/abonnements/${abonnementASupprimer}`, { method: 'DELETE' });
+    if (res.ok) {
+        location.reload();
+    } else {
+        fermerModalSuppression();
+        alert("Erreur lors de la résiliation de l'abonnement.");
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        fermerModalSuppression();
+    }
+});
+
 function toggleCustomCategorie() {
     const select = document.getElementById('categorie-select');
     const customInput = document.getElementById('custom-categorie');
