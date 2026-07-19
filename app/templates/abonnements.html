@@ -343,36 +343,29 @@ function toggleCustomCategorie() {
     }
 }
 
-// Gérer l'envoi du formulaire pour la catégorie personnalisée
-document.addEventListener('DOMContentLoaded', function() {
+// Gérer l'envoi du formulaire pour la catégorie personnalisée.
+// HTMX intercepte lui-même l'événement "submit" et lit le FormData pour construire sa
+// requête : un listener "submit" classique n'est pas fiable ici car son ordre d'exécution
+// par rapport à celui de HTMX n'est pas garanti (HTMX peut sérialiser les champs avant que
+// notre renommage n'ait eu lieu). On utilise donc l'événement dédié HTMX "htmx:configRequest",
+// qui s'exécute juste avant l'envoi, pour réécrire directement le paramètre "categorie".
+document.addEventListener('htmx:configRequest', function(e) {
     const form = document.querySelector('#form-panel form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const select = document.getElementById('categorie-select');
-            const customInput = document.getElementById('custom-categorie');
+    if (!form || e.target !== form) return;
 
-            // Repart d'un état propre à chaque tentative (utile si un envoi précédent a échoué
-            // côté serveur sans recharger la page).
-            select.disabled = false;
-            customInput.name = 'categorie_custom';
+    const select = document.getElementById('categorie-select');
+    const customInput = document.getElementById('custom-categorie');
 
-            if (select.value === '__custom__') {
-                // Si "Autre" est sélectionné, utiliser la valeur du champ personnalisé.
-                // Un <select> ne peut pas recevoir une valeur arbitraire via .value = "..." —
-                // ça échoue silencieusement et "__custom__" partait tel quel côté serveur.
-                // On désactive donc le select (exclu de l'envoi) et on fait porter le nom
-                // "categorie" par le champ texte personnalisé à la place.
-                if (!customInput.value.trim()) {
-                    e.preventDefault();
-                    alert('Veuillez entrer une catégorie personnalisée');
-                    customInput.focus();
-                    return;
-                }
-                select.disabled = true;
-                customInput.name = 'categorie';
-            }
-        });
+    if (select.value === '__custom__') {
+        if (!customInput.value.trim()) {
+            e.preventDefault();
+            alert('Veuillez entrer une catégorie personnalisée');
+            customInput.focus();
+            return;
+        }
+        e.detail.parameters['categorie'] = customInput.value.trim();
     }
+    delete e.detail.parameters['categorie_custom'];
 });
 
 {% if categories %}
