@@ -72,10 +72,13 @@ def creer_objectif(
     montant_cible: float = Form(...),
     id_compte: int | None = Form(None),
     date_limite: str | None = Form(None),
+    montant_initial: float = Form(0.0),
     db: Session = Depends(get_db)
 ):
     if montant_cible <= 0:
         raise HTTPException(status_code=400, detail="Le montant cible doit être strictement positif.")
+    if montant_initial < 0:
+        raise HTTPException(status_code=400, detail="Le fonds actuel ne peut pas être négatif.")
 
     date_limite_dt = None
     if date_limite:
@@ -90,13 +93,19 @@ def creer_objectif(
     objectif = ObjectifEpargne(
         nom=nom,
         montant_cible=montant_cible,
+        montant_actuel=montant_initial,
         id_compte=id_compte,
         date_limite=date_limite_dt,
     )
     db.add(objectif)
+    db.flush()
+
+    if montant_initial > 0:
+        db.add(HistoriqueEpargne(id_objectif=objectif.id, montant=montant_initial))
+
     db.commit()
     db.refresh(objectif)
-    objectif.progression_pct = 0.0
+    objectif.progression_pct = round((objectif.montant_actuel / objectif.montant_cible) * 100, 1) if objectif.montant_cible else 0.0
     return objectif
 
 

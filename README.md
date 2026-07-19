@@ -38,3 +38,17 @@ finansmart/
 
 cd ~/myECO && source venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Arrêtez le serveur uvicorn en cours (Ctrl+C dans le terminal où il tourne).
+
+Supprimez complètement le fichier de base de données :
+
+
+cd ~/myECO
+rm data/finansmart.db
+Relancez le serveur :
+
+source venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Ouvrez http://100.113.39.5:8000/ dans votre navigateur.
