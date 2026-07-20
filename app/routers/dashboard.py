@@ -104,6 +104,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/onboarding")
     context = _build_dashboard_context(db, user.id)
     context["request"] = request
+    context["identifiant_utilisateur"] = user.identifiant
     return templates.TemplateResponse("index.html", context)
 
 

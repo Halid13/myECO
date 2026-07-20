@@ -32,7 +32,7 @@ def traiter_login(
         }, status_code=401)
 
     request.session["user_id"] = utilisateur.id
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse("/?connexion=1", status_code=303)
 
 
 @router.get("/logout", summary="Déconnexion")

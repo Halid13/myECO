@@ -209,6 +209,21 @@
     </div>
 </div>
 
+<!-- ==================== MODAL : SALUTATION ==================== -->
+<div id="modal-salutation" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerSalutation()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-emerald-800/40 rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
+        <span id="salutation-emoji" class="text-4xl leading-none block mb-3">👋</span>
+        <h3 id="salutation-titre" class="text-lg font-bold text-white"></h3>
+        <p id="salutation-message" class="text-sm text-gray-400 mt-1.5"></p>
+        <button type="button" onclick="fermerSalutation()"
+            class="mt-5 w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg py-2 transition">
+            Fermer
+        </button>
+    </div>
+</div>
+
 <!-- ==================== SCRIPTS ==================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -244,8 +259,40 @@ function toggleModal(id) {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         document.getElementById('modal-depenses-fixes')?.classList.add('hidden');
+        fermerSalutation();
     }
 });
+
+// ===== SALUTATION (bienvenue / bon retour) =====
+function fermerSalutation() {
+    document.getElementById('modal-salutation')?.classList.add('hidden');
+}
+
+function afficherSalutation(emoji, titre, message) {
+    document.getElementById('salutation-emoji').textContent = emoji;
+    document.getElementById('salutation-titre').textContent = titre;
+    document.getElementById('salutation-message').textContent = message;
+    document.getElementById('modal-salutation').classList.remove('hidden');
+    setTimeout(fermerSalutation, 5000);
+}
+
+(function () {
+    const params = new URLSearchParams(window.location.search);
+    const identifiant = {{ identifiant_utilisateur|tojson }};
+
+    if (params.get('bienvenue') === '1') {
+        afficherSalutation('🎉', `Bienvenue, ${identifiant} !`, "Votre espace est configuré, vous pouvez commencer à suivre vos finances.");
+    } else if (params.get('connexion') === '1') {
+        afficherSalutation('👋', `Content de vous revoir, ${identifiant} !`, "Voici un aperçu de votre situation financière.");
+    }
+
+    if (params.has('bienvenue') || params.has('connexion')) {
+        params.delete('bienvenue');
+        params.delete('connexion');
+        const nouvelleUrl = window.location.pathname + (params.toString() ? `?${params}` : '');
+        window.history.replaceState({}, '', nouvelleUrl);
+    }
+})();
 </script>
 
 {% endblock %}
