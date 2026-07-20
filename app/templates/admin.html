@@ -61,13 +61,20 @@
                 <td class="py-2 px-3 text-gray-500 hidden md:table-cell">{{ u.date_creation.strftime("%d/%m/%Y") if u.date_creation else "—" }}</td>
                 <td class="py-2 px-3 text-gray-500 hidden md:table-cell">{{ u.derniere_connexion.strftime("%d/%m/%Y %H:%M") if u.derniere_connexion else "Jamais" }}</td>
                 <td class="py-2 px-3 text-right whitespace-nowrap">
+                    {% if u.identifiant != identifiant_admin %}
+                    <button onclick="ouvrirRenommage({{ u.id }}, '{{ u.identifiant|e }}')"
+                        title="Renommer cet utilisateur"
+                        class="text-gray-600 hover:text-purple-400 transition p-1 rounded">
+                        {{ icons.icon("adjustments", "14") }}
+                    </button>
+                    {% endif %}
                     <button onclick="ouvrirReinitialisation({{ u.id }}, '{{ u.identifiant|e }}')"
                         title="Réinitialiser le mot de passe"
                         class="text-gray-600 hover:text-blue-400 transition p-1 rounded">
                         {{ icons.icon("pencil", "14") }}
                     </button>
                     {% if u.identifiant != identifiant_admin %}
-                    <button onclick="supprimerUtilisateur({{ u.id }}, '{{ u.identifiant|e }}')"
+                    <button onclick="ouvrirSuppression({{ u.id }})"
                         title="Supprimer cet utilisateur"
                         class="text-gray-600 hover:text-red-400 transition p-1 rounded">
                         {{ icons.icon("x-circle", "14") }}
@@ -78,6 +85,81 @@
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<!-- ==================== MODAL : RENOMMER ==================== -->
+<div id="modal-renommer" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerRenommage()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-gray-800 rounded-lg shadow-2xl w-full max-w-sm">
+        <div class="flex items-center gap-2 p-4 border-b border-gray-800">
+            {{ icons.icon("adjustments", "18", class="text-purple-400") }}
+            <h3 class="text-sm font-semibold text-white">Renommer l'utilisateur</h3>
+        </div>
+        <div class="p-4 space-y-3">
+            <p class="text-sm text-gray-400">Nouvel identifiant pour <span id="renommer-ancien-identifiant" class="text-white font-medium"></span> :</p>
+            <input id="renommer-nouvel-identifiant" type="text" placeholder="Nouvel identifiant"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-purple-500" />
+            <p id="erreur-renommer" class="hidden text-xs text-red-400"></p>
+        </div>
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+            <button type="button" onclick="fermerRenommage()"
+                class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg px-4 py-2 transition">
+                Annuler
+            </button>
+            <button type="button" onclick="confirmerRenommage()"
+                class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+                Renommer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL : SUPPRESSION (résumé + confirmation par saisie) ==================== -->
+<div id="modal-suppression" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+     onclick="if (event.target === this) fermerSuppression()">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-gray-950 border border-red-900/40 rounded-lg shadow-2xl w-full max-w-sm">
+        <div class="flex items-center gap-2 p-4 border-b border-gray-800">
+            {{ icons.icon("x-circle", "18", class="text-red-400") }}
+            <h3 class="text-sm font-semibold text-white">Supprimer l'utilisateur</h3>
+        </div>
+
+        <!-- Étape 1 : résumé de ce qui va être supprimé -->
+        <div id="suppression-etape-resume" class="p-4 space-y-3">
+            <p id="suppression-chargement" class="text-xs text-gray-500">Chargement du résumé…</p>
+            <div id="suppression-resume" class="hidden space-y-2">
+                <p class="text-sm text-gray-300">
+                    Ceci va supprimer définitivement <span id="suppression-identifiant" class="text-white font-medium"></span> et :
+                </p>
+                <ul class="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                    <li><span id="suppression-nb-comptes"></span> compte(s) bancaire(s), avec leurs mouvements et abonnements liés</li>
+                    <li><span id="suppression-nb-objectifs"></span> objectif(s) d'épargne, avec leur historique</li>
+                    <li><span id="suppression-nb-placements"></span> placement(s), avec leur historique</li>
+                </ul>
+                <p class="text-xs text-red-400 font-medium">Cette action est irréversible.</p>
+                <div>
+                    <label class="text-[11px] text-gray-500 uppercase tracking-widest">
+                        Retaper "<span id="suppression-identifiant-confirmation"></span>" pour confirmer
+                    </label>
+                    <input id="suppression-saisie-confirmation" type="text" autocomplete="off"
+                        class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500" />
+                </div>
+                <p id="erreur-suppression" class="hidden text-xs text-red-400"></p>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2 p-4 border-t border-gray-800">
+            <button type="button" onclick="fermerSuppression()"
+                class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg px-4 py-2 transition">
+                Annuler
+            </button>
+            <button type="button" onclick="confirmerSuppression()"
+                class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+                Supprimer
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- ==================== MODAL : RÉINITIALISER MOT DE PASSE ==================== -->
@@ -135,22 +217,98 @@ async function creerUtilisateur() {
     }
 }
 
-let utilisateurASupprimer = null;
+let utilisateurARenommer = null;
 
-async function supprimerUtilisateur(id, identifiant) {
-    const ok = await confirmerAction({
-        titre: "Supprimer l'utilisateur",
-        message: `Supprimer "${identifiant}" et toutes ses données (comptes, mouvements, abonnements, épargne, placements) ? Cette action est irréversible.`,
-        labelConfirmer: 'Supprimer',
-    });
-    if (!ok) return;
+function ouvrirRenommage(id, identifiant) {
+    utilisateurARenommer = id;
+    document.getElementById('renommer-ancien-identifiant').textContent = `"${identifiant}"`;
+    document.getElementById('renommer-nouvel-identifiant').value = identifiant;
+    document.getElementById('erreur-renommer').classList.add('hidden');
+    document.getElementById('modal-renommer').classList.remove('hidden');
+}
 
-    const res = await fetch(`/api/v1/admin/utilisateurs/${id}`, { method: 'DELETE' });
+function fermerRenommage() {
+    utilisateurARenommer = null;
+    document.getElementById('modal-renommer').classList.add('hidden');
+}
+
+async function confirmerRenommage() {
+    if (!utilisateurARenommer) return;
+    const nouvelIdentifiant = document.getElementById('renommer-nouvel-identifiant').value.trim();
+    const erreur = document.getElementById('erreur-renommer');
+    erreur.classList.add('hidden');
+
+    if (!nouvelIdentifiant) {
+        erreur.textContent = "Indiquez un identifiant.";
+        erreur.classList.remove('hidden');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('identifiant', nouvelIdentifiant);
+    const res = await fetch(`/api/v1/admin/utilisateurs/${utilisateurARenommer}/identifiant`, { method: 'PUT', body: formData });
     if (res.ok) {
         location.reload();
     } else {
         const err = await res.json().catch(() => ({}));
-        alert(err.detail || "Erreur lors de la suppression.");
+        erreur.textContent = err.detail || "Erreur lors du renommage.";
+        erreur.classList.remove('hidden');
+    }
+}
+
+let utilisateurASupprimer = null;
+
+async function ouvrirSuppression(id) {
+    utilisateurASupprimer = id;
+    document.getElementById('suppression-chargement').classList.remove('hidden');
+    document.getElementById('suppression-resume').classList.add('hidden');
+    document.getElementById('erreur-suppression').classList.add('hidden');
+    document.getElementById('suppression-saisie-confirmation').value = '';
+    document.getElementById('modal-suppression').classList.remove('hidden');
+
+    const res = await fetch(`/api/v1/admin/utilisateurs/${id}/resume`);
+    if (!res.ok) {
+        fermerSuppression();
+        alert("Impossible de charger le résumé de suppression.");
+        return;
+    }
+    const resume = await res.json();
+
+    document.getElementById('suppression-identifiant').textContent = `"${resume.identifiant}"`;
+    document.getElementById('suppression-identifiant-confirmation').textContent = resume.identifiant;
+    document.getElementById('suppression-nb-comptes').textContent = resume.nb_comptes;
+    document.getElementById('suppression-nb-objectifs').textContent = resume.nb_objectifs;
+    document.getElementById('suppression-nb-placements').textContent = resume.nb_placements;
+    utilisateurASupprimer = { id, identifiant: resume.identifiant };
+
+    document.getElementById('suppression-chargement').classList.add('hidden');
+    document.getElementById('suppression-resume').classList.remove('hidden');
+}
+
+function fermerSuppression() {
+    utilisateurASupprimer = null;
+    document.getElementById('modal-suppression').classList.add('hidden');
+}
+
+async function confirmerSuppression() {
+    if (!utilisateurASupprimer) return;
+    const saisie = document.getElementById('suppression-saisie-confirmation').value.trim();
+    const erreur = document.getElementById('erreur-suppression');
+    erreur.classList.add('hidden');
+
+    if (saisie !== utilisateurASupprimer.identifiant) {
+        erreur.textContent = "L'identifiant saisi ne correspond pas.";
+        erreur.classList.remove('hidden');
+        return;
+    }
+
+    const res = await fetch(`/api/v1/admin/utilisateurs/${utilisateurASupprimer.id}`, { method: 'DELETE' });
+    if (res.ok) {
+        location.reload();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        erreur.textContent = err.detail || "Erreur lors de la suppression.";
+        erreur.classList.remove('hidden');
     }
 }
 
@@ -197,6 +355,8 @@ async function confirmerReinitialisation() {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         fermerReinitialisation();
+        fermerRenommage();
+        fermerSuppression();
     }
 });
 </script>

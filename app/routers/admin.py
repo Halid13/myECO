@@ -7,6 +7,8 @@ from app.database import get_db
 from app.auth import utilisateur_connecte, require_admin, IDENTIFIANT_ADMIN
 from app.models.utilisateur import Utilisateur
 from app.models.compte import Compte
+from app.models.epargne import ObjectifEpargne
+from app.models.placement import Placement
 from app.services.utilisateurs import supprimer_utilisateur_et_donnees
 
 router = APIRouter(tags=["Administration"])
@@ -69,6 +71,50 @@ def reinitialiser_mot_de_passe(
     utilisateur.mot_de_passe_hash = bcrypt.hash(mot_de_passe)
     db.commit()
     return {"ok": True}
+
+
+@router.put("/api/v1/admin/utilisateurs/{utilisateur_id}/identifiant", summary="Renommer un utilisateur")
+def renommer_utilisateur(
+    utilisateur_id: int,
+    identifiant: str = Form(...),
+    db: Session = Depends(get_db),
+    admin: Utilisateur = Depends(require_admin),
+):
+    utilisateur = db.get(Utilisateur, utilisateur_id)
+    if not utilisateur:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+    if utilisateur.identifiant == IDENTIFIANT_ADMIN:
+        raise HTTPException(status_code=400, detail="Impossible de renommer le compte administrateur.")
+
+    identifiant = identifiant.strip()
+    if not identifiant:
+        raise HTTPException(status_code=400, detail="Identifiant vide.")
+    if identifiant == IDENTIFIANT_ADMIN:
+        raise HTTPException(status_code=400, detail="Cet identifiant est réservé.")
+    if db.query(Utilisateur).filter(Utilisateur.identifiant == identifiant, Utilisateur.id != utilisateur_id).first():
+        raise HTTPException(status_code=400, detail=f"Un utilisateur '{identifiant}' existe déjà.")
+
+    utilisateur.identifiant = identifiant
+    db.commit()
+    return {"id": utilisateur.id, "identifiant": utilisateur.identifiant}
+
+
+@router.get("/api/v1/admin/utilisateurs/{utilisateur_id}/resume", summary="Résumé des données avant suppression")
+def resume_utilisateur(
+    utilisateur_id: int,
+    db: Session = Depends(get_db),
+    admin: Utilisateur = Depends(require_admin),
+):
+    utilisateur = db.get(Utilisateur, utilisateur_id)
+    if not utilisateur:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+
+    return {
+        "identifiant": utilisateur.identifiant,
+        "nb_comptes": db.query(Compte).filter(Compte.id_utilisateur == utilisateur.id).count(),
+        "nb_objectifs": db.query(ObjectifEpargne).filter(ObjectifEpargne.id_utilisateur == utilisateur.id).count(),
+        "nb_placements": db.query(Placement).filter(Placement.id_utilisateur == utilisateur.id).count(),
+    }
 
 
 @router.delete("/api/v1/admin/utilisateurs/{utilisateur_id}", status_code=204, summary="Supprimer un utilisateur")
