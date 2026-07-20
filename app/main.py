@@ -8,7 +8,7 @@ from datetime import time
 import logging
 
 from app.database import init_db
-from app.routers import dashboard, comptes, abonnements, epargne, investissements, assistant, onboarding, auth
+from app.routers import dashboard, comptes, abonnements, epargne, investissements, assistant, onboarding, auth, admin
 from app.services.prelevements import executer_prelevements
 
 # Configuration du logging
@@ -62,6 +62,7 @@ def on_shutdown():
 
 # Inclusion des routers
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(onboarding.router)
 app.include_router(dashboard.router)
 app.include_router(comptes.router)

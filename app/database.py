@@ -46,6 +46,7 @@ def _appliquer_migrations_legeres():
         ],
         "compte": [("id_utilisateur", "INTEGER REFERENCES utilisateur(id)")],
         "recommandation": [("id_utilisateur", "INTEGER REFERENCES utilisateur(id)")],
+        "utilisateur": [("derniere_connexion", "DATETIME")],
     }
     with engine.begin() as conn:
         for table, colonnes in colonnes_attendues.items():

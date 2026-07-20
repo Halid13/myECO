@@ -55,3 +55,4 @@ Ouvrez http://100.113.39.5:8000/ dans votre navigateur.
 
 Lancer python -m app.scripts.backfill_utilisateur (te demandera un mot de passe pour "admin").
 Lancer python -m app.scripts.creer_utilisateur autant de fois que de personnes à ajouter.
+python -m app.scripts.supprimer_utilisateur

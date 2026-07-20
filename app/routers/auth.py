@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -31,7 +32,11 @@ def traiter_login(
             "erreur": "Identifiant ou mot de passe incorrect.",
         }, status_code=401)
 
+    utilisateur.derniere_connexion = datetime.now(timezone.utc)
+    db.commit()
+
     request.session["user_id"] = utilisateur.id
+    request.session["identifiant"] = utilisateur.identifiant
     return RedirectResponse("/?connexion=1", status_code=303)
 
 

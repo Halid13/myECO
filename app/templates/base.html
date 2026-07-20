@@ -101,6 +101,16 @@
                     <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
                 </button>
 
+                <!-- Bouton Administration (visible uniquement pour l'admin) -->
+                {% if request.session.get("identifiant") == "admin" %}
+                <a href="/admin" title="Administration"
+                   class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
+                          bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                          shadow-inner hover:text-blue-400 hover:border-blue-600/50 transition-all duration-300">
+                    {{ icons.icon("adjustments", "18") }}
+                </a>
+                {% endif %}
+
                 <!-- Bouton Déconnexion -->
                 <button type="button" onclick="demanderDeconnexion()" title="Déconnexion"
                    class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
