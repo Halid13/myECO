@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import date
 import calendar
 from app.database import get_db
+from app.auth import get_current_user, utilisateur_connecte
 from app.models.abonnement import Abonnement
 from app.models.compte import Compte
 from app.schemas.abonnement import AbonnementCreate, AbonnementUpdate, AbonnementRead
@@ -37,6 +39,8 @@ PAGE_SIZE = 6
 
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
 def page_abonnements(request: Request, page: int = 1, db: Session = Depends(get_db)):
+    if not utilisateur_connecte(request, db):
+        return RedirectResponse("/login")
     abonnements = (
         db.query(Abonnement)
         .filter(Abonnement.actif == True)
@@ -115,7 +119,8 @@ def creer_abonnement(
     jour_prelevement: int = Form(...),
     id_compte: int = Form(...),
     categorie: str = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     from app.models.abonnement import FrequenceAbonnement
     
@@ -138,7 +143,7 @@ def creer_abonnement(
 
 
 @router.get("/api/v1/abonnements", response_model=list[AbonnementRead], summary="Lister les abonnements")
-def lister_abonnements(actif: bool | None = None, db: Session = Depends(get_db)):
+def lister_abonnements(actif: bool | None = None, db: Session = Depends(get_db), user=Depends(get_current_user)):
     q = db.query(Abonnement)
     if actif is not None:
         q = q.filter(Abonnement.actif == actif)
@@ -146,7 +151,7 @@ def lister_abonnements(actif: bool | None = None, db: Session = Depends(get_db))
 
 
 @router.put("/api/v1/abonnements/{abonnement_id}", response_model=AbonnementRead, summary="Modifier un abonnement")
-def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Session = Depends(get_db)):
+def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
     abonnement = db.get(Abonnement, abonnement_id)
     if not abonnement:
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
@@ -158,7 +163,7 @@ def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Sessi
 
 
 @router.delete("/api/v1/abonnements/{abonnement_id}", status_code=204, summary="Supprimer un abonnement")
-def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db)):
+def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     abonnement = db.get(Abonnement, abonnement_id)
     if not abonnement:
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
@@ -169,7 +174,7 @@ def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db)):
 # ==================== ENDPOINTS PRÉLÈVEMENTS AUTOMATIQUES ====================
 
 @router.get("/api/v1/prelevements/prochains", summary="Lister les prochains prélèvements")
-def get_prochains_prelevements(jours: int = 30):
+def get_prochains_prelevements(jours: int = 30, user=Depends(get_current_user)):
     """Retourne la liste des prochains prélèvements dans N jours (info uniquement)."""
     from app.services.prelevements import obtenir_prochains_prelevements
     return obtenir_prochains_prelevements(jours)

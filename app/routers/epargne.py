@@ -1,8 +1,10 @@
 from datetime import date, datetime, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import get_current_user, utilisateur_connecte
 from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement, TypeMouvement
@@ -21,6 +23,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/patrimoine/", summary="Page Patrimoine (Épargne & Investissements)")
 def page_patrimoine(request: Request, db: Session = Depends(get_db)):
+    if not utilisateur_connecte(request, db):
+        return RedirectResponse("/login")
     today = date.today()
     objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
     comptes = db.query(Compte).all()
@@ -56,7 +60,7 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/api/v1/epargne", response_model=list[ObjectifEpargneRead], summary="Lister les objectifs d'épargne")
-def lister_objectifs(db: Session = Depends(get_db)):
+def lister_objectifs(db: Session = Depends(get_db), user=Depends(get_current_user)):
     objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
     result = []
     for obj in objectifs:
@@ -73,7 +77,8 @@ def creer_objectif(
     id_compte: int | None = Form(None),
     date_limite: str | None = Form(None),
     montant_initial: float = Form(0.0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     if montant_cible <= 0:
         raise HTTPException(status_code=400, detail="Le montant cible doit être strictement positif.")
@@ -114,7 +119,8 @@ def update_epargne(
     objectif_id: int,
     montant: float = Form(...),
     deduire_compte: bool = Form(False),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     objectif = db.get(ObjectifEpargne, objectif_id)
     if not objectif:
@@ -148,7 +154,7 @@ def update_epargne(
 
 
 @router.delete("/api/v1/epargne/{objectif_id}", status_code=204, summary="Clôturer un objectif d'épargne")
-def cloturer_objectif(objectif_id: int, db: Session = Depends(get_db)):
+def cloturer_objectif(objectif_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     objectif = db.get(ObjectifEpargne, objectif_id)
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif introuvable")

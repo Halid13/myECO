@@ -4,6 +4,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import get_current_user, utilisateur_connecte
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
@@ -80,6 +81,8 @@ def _build_dashboard_context(db: Session) -> dict:
 
 @router.get("/", summary="Page principale — Dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
+    if not utilisateur_connecte(request, db):
+        return RedirectResponse("/login")
     if db.query(Compte).count() == 0:
         return RedirectResponse("/onboarding")
     context = _build_dashboard_context(db)
@@ -88,5 +91,5 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/api/v1/dashboard", summary="Données consolidées du dashboard (JSON)")
-def get_dashboard_data(db: Session = Depends(get_db)):
+def get_dashboard_data(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return _build_dashboard_context(db)

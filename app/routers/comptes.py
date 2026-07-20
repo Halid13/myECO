@@ -1,8 +1,10 @@
 from datetime import date, datetime, timezone
 from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import get_current_user, utilisateur_connecte
 from app.models.compte import Compte
 from app.models.mouvement import Mouvement
 from app.models.abonnement import Abonnement
@@ -19,6 +21,8 @@ PAGE_SIZE = 6
 
 @router.get("/comptes/", summary="Page Mouvements & Comptes")
 def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, db: Session = Depends(get_db)):
+    if not utilisateur_connecte(request, db):
+        return RedirectResponse("/login")
     comptes = db.query(Compte).all()
     q = db.query(Mouvement)
     if compte_id:
@@ -50,7 +54,7 @@ def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, 
 # --- Comptes ---
 
 @router.get("/api/v1/comptes", response_model=list[CompteRead], summary="Lister les comptes")
-def lister_comptes(db: Session = Depends(get_db)):
+def lister_comptes(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return db.query(Compte).all()
 
 
@@ -58,7 +62,8 @@ def lister_comptes(db: Session = Depends(get_db)):
 def creer_compte(
     nom_banque: str = Form(...),
     solde: float = Form(0.0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     compte = Compte(nom_banque=nom_banque, solde=solde, date_maj=datetime.now(timezone.utc))
     db.add(compte)
@@ -71,7 +76,8 @@ def creer_compte(
 def ajuster_solde(
     compte_id: int,
     solde: float = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     compte = db.get(Compte, compte_id)
     if not compte:
@@ -88,7 +94,8 @@ def modifier_compte(
     compte_id: int,
     nom_banque: str = Form(None),
     solde: float = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     compte = db.get(Compte, compte_id)
     if not compte:
@@ -104,7 +111,7 @@ def modifier_compte(
 
 
 @router.delete("/api/v1/comptes/{compte_id}", status_code=204, summary="Supprimer un compte")
-def supprimer_compte(compte_id: int, db: Session = Depends(get_db)):
+def supprimer_compte(compte_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     compte = db.get(Compte, compte_id)
     if not compte:
         raise HTTPException(status_code=404, detail="Compte introuvable")
@@ -119,7 +126,7 @@ def supprimer_compte(compte_id: int, db: Session = Depends(get_db)):
 # --- Mouvements ---
 
 @router.get("/api/v1/mouvements", response_model=list[MouvementRead], summary="Lister les mouvements")
-def lister_mouvements(compte_id: int | None = None, db: Session = Depends(get_db)):
+def lister_mouvements(compte_id: int | None = None, db: Session = Depends(get_db), user=Depends(get_current_user)):
     q = db.query(Mouvement)
     if compte_id:
         q = q.filter(Mouvement.id_compte == compte_id)
@@ -133,7 +140,8 @@ def creer_mouvement(
     montant: float = Form(...),
     categorie: str = Form(None),
     description: str = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     from app.models.mouvement import TypeMouvement
     
@@ -166,7 +174,7 @@ def creer_mouvement(
 
 
 @router.delete("/api/v1/mouvements/{mouvement_id}", status_code=204, summary="Supprimer un mouvement")
-def supprimer_mouvement(mouvement_id: int, db: Session = Depends(get_db)):
+def supprimer_mouvement(mouvement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     mouvement = db.get(Mouvement, mouvement_id)
     if not mouvement:
         raise HTTPException(status_code=404, detail="Mouvement introuvable")

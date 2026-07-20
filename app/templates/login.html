@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020817" />
+    <title>FinanSmart — Connexion</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] } } }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/custom.css" />
+</head>
+<body class="bg-slate-950 text-gray-100 min-h-screen font-sans antialiased flex items-center justify-center p-4">
+
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-6">
+            <span class="text-3xl leading-none">💰</span>
+            <h1 class="text-2xl font-bold text-white tracking-tight mt-2">FinanSmart</h1>
+            <p class="text-sm text-gray-500 mt-1">Connectez-vous pour accéder à vos finances.</p>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+            <form method="post" action="/login" class="space-y-3">
+                {% if erreur %}
+                <p class="text-xs text-red-400 bg-red-950/30 border border-red-800/50 rounded-lg px-3 py-2">{{ erreur }}</p>
+                {% endif %}
+
+                <div>
+                    <label class="text-[11px] text-gray-500 uppercase tracking-widest">Identifiant</label>
+                    <input type="text" name="identifiant" required autofocus
+                        class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
+                </div>
+                <div>
+                    <label class="text-[11px] text-gray-500 uppercase tracking-widest">Mot de passe</label>
+                    <input type="password" name="mot_de_passe" required
+                        class="w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500" />
+                </div>
+
+                <button type="submit"
+                    class="w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg py-2.5 transition">
+                    Se connecter
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

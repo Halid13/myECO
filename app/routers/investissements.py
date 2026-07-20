@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import get_current_user
 from app.models.placement import Placement, HistoriqueInvestissement
 from app.schemas.placement import PlacementRead
 from app.services.investissements import (
@@ -59,7 +60,7 @@ def build_investissements_context(db: Session, today: date) -> dict:
 
 
 @router.get("/api/v1/investissements", response_model=list[PlacementRead], summary="Lister les placements")
-def lister_placements(db: Session = Depends(get_db)):
+def lister_placements(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return db.query(Placement).all()
 
 
@@ -71,7 +72,8 @@ def creer_placement(
     valeur_actuelle: float = Form(...),
     date_investissement: str = Form(None),
     description: str = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     if capital_investi < 0 or valeur_actuelle < 0:
         raise HTTPException(status_code=400, detail="Les montants ne peuvent pas être négatifs.")
@@ -108,7 +110,8 @@ def modifier_placement(
     nom_support: str = Form(None),
     type_actif: str = Form(None),
     description: str = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     placement = db.get(Placement, placement_id)
     if not placement:
@@ -125,7 +128,7 @@ def modifier_placement(
 
 
 @router.put("/api/v1/investissements/{placement_id}/value", response_model=PlacementRead, summary="Mettre à jour la valeur liquidative")
-def update_valeur(placement_id: int, valeur_actuelle: float = Form(...), db: Session = Depends(get_db)):
+def update_valeur(placement_id: int, valeur_actuelle: float = Form(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
     if not placement:
         raise HTTPException(status_code=404, detail="Placement introuvable")
@@ -146,7 +149,7 @@ def update_valeur(placement_id: int, valeur_actuelle: float = Form(...), db: Ses
 
 
 @router.put("/api/v1/investissements/{placement_id}/versement", response_model=PlacementRead, summary="Ajouter un versement complémentaire")
-def ajouter_versement(placement_id: int, montant: float = Form(...), db: Session = Depends(get_db)):
+def ajouter_versement(placement_id: int, montant: float = Form(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
     if not placement:
         raise HTTPException(status_code=404, detail="Placement introuvable")
@@ -162,7 +165,7 @@ def ajouter_versement(placement_id: int, montant: float = Form(...), db: Session
 
 
 @router.delete("/api/v1/investissements/{placement_id}", status_code=204, summary="Supprimer un placement")
-def supprimer_placement(placement_id: int, db: Session = Depends(get_db)):
+def supprimer_placement(placement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
     if not placement:
         raise HTTPException(status_code=404, detail="Placement introuvable")
