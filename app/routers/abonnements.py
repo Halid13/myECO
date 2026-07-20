@@ -39,11 +39,13 @@ PAGE_SIZE = 6
 
 @router.get("/abonnements/", summary="Page Charges Fixes & Abonnements")
 def page_abonnements(request: Request, page: int = 1, db: Session = Depends(get_db)):
-    if not utilisateur_connecte(request, db):
+    user = utilisateur_connecte(request, db)
+    if not user:
         return RedirectResponse("/login")
     abonnements = (
         db.query(Abonnement)
-        .filter(Abonnement.actif == True)
+        .join(Compte)
+        .filter(Abonnement.actif == True, Compte.id_utilisateur == user.id)
         .order_by(Abonnement.jour_prelevement)
         .all()
     )
@@ -94,7 +96,7 @@ def page_abonnements(request: Request, page: int = 1, db: Session = Depends(get_
         "abonnements": abonnements_page,
         "page": page,
         "nb_pages": nb_pages,
-        "comptes_list": db.query(Compte).all(),
+        "comptes_list": db.query(Compte).filter(Compte.id_utilisateur == user.id).all(),
         "prochains": prochains,
         "total_mensuel": total_mensuel,
         "total_annuel": total_annuel,
@@ -123,10 +125,14 @@ def creer_abonnement(
     user=Depends(get_current_user),
 ):
     from app.models.abonnement import FrequenceAbonnement
-    
+
+    compte = db.get(Compte, id_compte)
+    if not compte or compte.id_utilisateur != user.id:
+        raise HTTPException(status_code=404, detail="Compte introuvable")
+
     # Convertir string en Enum
     frequence_enum = FrequenceAbonnement(frequence)
-    
+
     abonnement = Abonnement(
         libelle=libelle,
         montant=montant,
@@ -144,7 +150,7 @@ def creer_abonnement(
 
 @router.get("/api/v1/abonnements", response_model=list[AbonnementRead], summary="Lister les abonnements")
 def lister_abonnements(actif: bool | None = None, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    q = db.query(Abonnement)
+    q = db.query(Abonnement).join(Compte).filter(Compte.id_utilisateur == user.id)
     if actif is not None:
         q = q.filter(Abonnement.actif == actif)
     return q.order_by(Abonnement.jour_prelevement).all()
@@ -153,7 +159,7 @@ def lister_abonnements(actif: bool | None = None, db: Session = Depends(get_db),
 @router.put("/api/v1/abonnements/{abonnement_id}", response_model=AbonnementRead, summary="Modifier un abonnement")
 def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
     abonnement = db.get(Abonnement, abonnement_id)
-    if not abonnement:
+    if not abonnement or abonnement.compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(abonnement, field, value)
@@ -165,7 +171,7 @@ def modifier_abonnement(abonnement_id: int, payload: AbonnementUpdate, db: Sessi
 @router.delete("/api/v1/abonnements/{abonnement_id}", status_code=204, summary="Supprimer un abonnement")
 def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     abonnement = db.get(Abonnement, abonnement_id)
-    if not abonnement:
+    if not abonnement or abonnement.compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Abonnement introuvable")
     db.delete(abonnement)
     db.commit()
@@ -177,4 +183,4 @@ def supprimer_abonnement(abonnement_id: int, db: Session = Depends(get_db), user
 def get_prochains_prelevements(jours: int = 30, user=Depends(get_current_user)):
     """Retourne la liste des prochains prélèvements dans N jours (info uniquement)."""
     from app.services.prelevements import obtenir_prochains_prelevements
-    return obtenir_prochains_prelevements(jours)
+    return obtenir_prochains_prelevements(user.id, jours)

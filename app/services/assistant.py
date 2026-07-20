@@ -22,13 +22,22 @@ STATUTS_ACTIFS = ["nouveau", "lu"]
 PRIORITE_NIVEAU = {"warning": 0, "info": 1, "success": 2}
 
 
-def construire_contexte(db: Session, today: date | None = None) -> dict:
+def construire_contexte(db: Session, id_utilisateur: int, today: date | None = None) -> dict:
     """Un seul passage de requêtes, partagé par toutes les règles."""
     today = today or date.today()
-    comptes = db.query(Compte).all()
-    abonnements = db.query(Abonnement).filter(Abonnement.actif == True).all()
-    objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
-    placements = db.query(Placement).all()
+    comptes = db.query(Compte).filter(Compte.id_utilisateur == id_utilisateur).all()
+    abonnements = (
+        db.query(Abonnement)
+        .join(Compte)
+        .filter(Abonnement.actif == True, Compte.id_utilisateur == id_utilisateur)
+        .all()
+    )
+    objectifs = (
+        db.query(ObjectifEpargne)
+        .filter(ObjectifEpargne.actif == True, ObjectifEpargne.id_utilisateur == id_utilisateur)
+        .all()
+    )
+    placements = db.query(Placement).filter(Placement.id_utilisateur == id_utilisateur).all()
 
     return {
         "today": today,
@@ -36,18 +45,18 @@ def construire_contexte(db: Session, today: date | None = None) -> dict:
         "abonnements": abonnements,
         "objectifs": objectifs,
         "placements": placements,
-        "revenus_mois": calculer_revenus_mois(db, today),
+        "revenus_mois": calculer_revenus_mois(db, id_utilisateur, today),
         "charges_mensuelles": calculer_charges_mensuelles(abonnements),
-        "effort_epargne": effort_epargne_mois(db, today),
-        "depenses_mois": calculer_mouvements_mois(db, TypeMouvement.sortie, today),
+        "effort_epargne": effort_epargne_mois(db, id_utilisateur, today),
+        "depenses_mois": calculer_mouvements_mois(db, TypeMouvement.sortie, id_utilisateur, today),
     }
 
 
-def executer_moteur(db: Session, today: date | None = None) -> list[Recommandation]:
+def executer_moteur(db: Session, id_utilisateur: int, today: date | None = None) -> list[Recommandation]:
     """Exécute toutes les règles, réconcilie avec les recommandations déjà en base
-    (dédup / auto-résolution), et retourne les recommandations actives."""
+    (dédup / auto-résolution), et retourne les recommandations actives de l'utilisateur."""
     today = today or date.today()
-    ctx = construire_contexte(db, today)
+    ctx = construire_contexte(db, id_utilisateur, today)
 
     candidats = []
     for regle in REGLES:
@@ -66,6 +75,7 @@ def executer_moteur(db: Session, today: date | None = None) -> list[Recommandati
                 Recommandation.type_regle == candidat["type_regle"],
                 Recommandation.cle_contexte == candidat["cle_contexte"],
                 Recommandation.statut.in_(STATUTS_ACTIFS),
+                Recommandation.id_utilisateur == id_utilisateur,
             )
             .first()
         )
@@ -78,6 +88,7 @@ def executer_moteur(db: Session, today: date | None = None) -> list[Recommandati
             existante.date_derniere_detection = maintenant
         else:
             db.add(Recommandation(
+                id_utilisateur=id_utilisateur,
                 type_regle=candidat["type_regle"],
                 cle_contexte=candidat["cle_contexte"],
                 niveau=candidat["niveau"],
@@ -93,7 +104,7 @@ def executer_moteur(db: Session, today: date | None = None) -> list[Recommandati
     # Auto-résolution : toute recommandation active dont la règle ne se déclenche plus
     actives_en_base = (
         db.query(Recommandation)
-        .filter(Recommandation.statut.in_(STATUTS_ACTIFS))
+        .filter(Recommandation.statut.in_(STATUTS_ACTIFS), Recommandation.id_utilisateur == id_utilisateur)
         .all()
     )
     for reco in actives_en_base:
@@ -105,7 +116,7 @@ def executer_moteur(db: Session, today: date | None = None) -> list[Recommandati
 
     actives = (
         db.query(Recommandation)
-        .filter(Recommandation.statut.in_(STATUTS_ACTIFS))
+        .filter(Recommandation.statut.in_(STATUTS_ACTIFS), Recommandation.id_utilisateur == id_utilisateur)
         .order_by(Recommandation.date_creation.desc())
         .all()
     )
@@ -113,10 +124,11 @@ def executer_moteur(db: Session, today: date | None = None) -> list[Recommandati
     return actives
 
 
-def obtenir_historique(db: Session, limite: int = 50) -> list[Recommandation]:
-    """Toutes les recommandations (actives, ignorées, résolues), les plus récentes d'abord."""
+def obtenir_historique(db: Session, id_utilisateur: int, limite: int = 50) -> list[Recommandation]:
+    """Toutes les recommandations de l'utilisateur (actives, ignorées, résolues), les plus récentes d'abord."""
     return (
         db.query(Recommandation)
+        .filter(Recommandation.id_utilisateur == id_utilisateur)
         .order_by(Recommandation.date_creation.desc())
         .limit(limite)
         .all()

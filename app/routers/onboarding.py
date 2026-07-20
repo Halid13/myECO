@@ -12,8 +12,9 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/onboarding", summary="Assistant de configuration initiale")
 def page_onboarding(request: Request, db: Session = Depends(get_db)):
-    if not utilisateur_connecte(request, db):
+    user = utilisateur_connecte(request, db)
+    if not user:
         return RedirectResponse("/login")
-    if db.query(Compte).count() > 0:
+    if db.query(Compte).filter(Compte.id_utilisateur == user.id).count() > 0:
         return RedirectResponse("/")
     return templates.TemplateResponse("onboarding.html", {"request": request})

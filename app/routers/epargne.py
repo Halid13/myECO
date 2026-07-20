@@ -23,11 +23,16 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/patrimoine/", summary="Page Patrimoine (Épargne & Investissements)")
 def page_patrimoine(request: Request, db: Session = Depends(get_db)):
-    if not utilisateur_connecte(request, db):
+    user = utilisateur_connecte(request, db)
+    if not user:
         return RedirectResponse("/login")
     today = date.today()
-    objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
-    comptes = db.query(Compte).all()
+    objectifs = (
+        db.query(ObjectifEpargne)
+        .filter(ObjectifEpargne.actif == True, ObjectifEpargne.id_utilisateur == user.id)
+        .all()
+    )
+    comptes = db.query(Compte).filter(Compte.id_utilisateur == user.id).all()
 
     for obj in objectifs:
         obj.progression_pct = round((obj.montant_actuel / obj.montant_cible) * 100, 1) if obj.montant_cible else 0.0
@@ -37,7 +42,7 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         )[:3]
 
     total_epargne = round(sum(o.montant_actuel for o in objectifs), 2)
-    effort = effort_epargne_mois(db, today)
+    effort = effort_epargne_mois(db, user.id, today)
     top_proches = sorted(
         [o for o in objectifs if o.progression_pct < 100],
         key=lambda o: o.progression_pct,
@@ -51,17 +56,21 @@ def page_patrimoine(request: Request, db: Session = Depends(get_db)):
         "total_epargne": total_epargne,
         "effort_mois": effort["mois"],
         "effort_mois_precedent": effort["mois_precedent"],
-        "evolution": evolution_epargne(db, today=today),
+        "evolution": evolution_epargne(db, user.id, today=today),
         "top_proches": top_proches,
         "chart_colors": CHART_COLORS,
     }
-    context.update(build_investissements_context(db, today))
+    context.update(build_investissements_context(db, user.id, today))
     return templates.TemplateResponse("patrimoine.html", context)
 
 
 @router.get("/api/v1/epargne", response_model=list[ObjectifEpargneRead], summary="Lister les objectifs d'épargne")
 def lister_objectifs(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
+    objectifs = (
+        db.query(ObjectifEpargne)
+        .filter(ObjectifEpargne.actif == True, ObjectifEpargne.id_utilisateur == user.id)
+        .all()
+    )
     result = []
     for obj in objectifs:
         data = ObjectifEpargneRead.model_validate(obj)
@@ -92,14 +101,17 @@ def creer_objectif(
         except ValueError:
             raise HTTPException(status_code=400, detail="Date cible invalide.")
 
-    if id_compte is not None and not db.get(Compte, id_compte):
-        raise HTTPException(status_code=404, detail="Compte associé introuvable")
+    if id_compte is not None:
+        compte = db.get(Compte, id_compte)
+        if not compte or compte.id_utilisateur != user.id:
+            raise HTTPException(status_code=404, detail="Compte associé introuvable")
 
     objectif = ObjectifEpargne(
         nom=nom,
         montant_cible=montant_cible,
         montant_actuel=montant_initial,
         id_compte=id_compte,
+        id_utilisateur=user.id,
         date_limite=date_limite_dt,
     )
     db.add(objectif)
@@ -123,7 +135,7 @@ def update_epargne(
     user=Depends(get_current_user),
 ):
     objectif = db.get(ObjectifEpargne, objectif_id)
-    if not objectif:
+    if not objectif or objectif.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Objectif introuvable")
     objectif.montant_actuel = round(objectif.montant_actuel + montant, 2)
     if objectif.montant_actuel < 0:
@@ -156,7 +168,7 @@ def update_epargne(
 @router.delete("/api/v1/epargne/{objectif_id}", status_code=204, summary="Clôturer un objectif d'épargne")
 def cloturer_objectif(objectif_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     objectif = db.get(ObjectifEpargne, objectif_id)
-    if not objectif:
+    if not objectif or objectif.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Objectif introuvable")
     objectif.actif = False
     db.commit()

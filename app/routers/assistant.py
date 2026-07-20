@@ -29,13 +29,13 @@ def _serialiser(r: Recommandation) -> dict:
 
 @router.get("/api/v1/assistant/alerts", summary="Récupérer les recommandations actives")
 def get_alertes(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    recommandations = executer_moteur(db, date.today())
+    recommandations = executer_moteur(db, user.id, date.today())
     return {"alertes": [_serialiser(r) for r in recommandations]}
 
 
 @router.get("/api/v1/assistant/historique", summary="Historique des recommandations")
 def get_historique(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return {"historique": [_serialiser(r) for r in obtenir_historique(db)]}
+    return {"historique": [_serialiser(r) for r in obtenir_historique(db, user.id)]}
 
 
 @router.put("/api/v1/assistant/{recommandation_id}/statut", summary="Marquer une recommandation comme lue/ignorée")
@@ -43,7 +43,7 @@ def modifier_statut(recommandation_id: int, statut: str = Form(...), db: Session
     if statut not in STATUTS_MODIFIABLES:
         raise HTTPException(status_code=400, detail=f"Statut invalide. Valeurs possibles : {STATUTS_MODIFIABLES}")
     recommandation = db.get(Recommandation, recommandation_id)
-    if not recommandation:
+    if not recommandation or recommandation.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Recommandation introuvable")
     recommandation.statut = statut
     db.commit()

@@ -33,15 +33,20 @@ TYPE_COLORS = {
 }
 
 
-def build_investissements_context(db: Session, today: date) -> dict:
+def build_investissements_context(db: Session, id_utilisateur: int, today: date) -> dict:
     """Prépare tout le contexte du Module 5, fusionné dans /patrimoine/ par epargne.py."""
-    placements = db.query(Placement).order_by(Placement.date_investissement.desc()).all()
+    placements = (
+        db.query(Placement)
+        .filter(Placement.id_utilisateur == id_utilisateur)
+        .order_by(Placement.date_investissement.desc())
+        .all()
+    )
     for p in placements:
         p.plus_value = round(p.valeur_actuelle - p.capital_investi, 2)
         p.performance_pct = round((p.plus_value / p.capital_investi) * 100, 2) if p.capital_investi else None
 
     perf = performance_globale(placements)
-    effort = effort_investissement_mois(db, today)
+    effort = effort_investissement_mois(db, id_utilisateur, today)
 
     return {
         "placements": placements,
@@ -55,13 +60,13 @@ def build_investissements_context(db: Session, today: date) -> dict:
         "investi_mois_precedent": effort["mois_precedent"],
         "delta_investi_pct": effort["delta_pct"],
         "repartition_investissements": repartition_par_type(placements),
-        "evolution_investissements": evolution_portefeuille(db, today=today),
+        "evolution_investissements": evolution_portefeuille(db, id_utilisateur, today=today),
     }
 
 
 @router.get("/api/v1/investissements", response_model=list[PlacementRead], summary="Lister les placements")
 def lister_placements(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return db.query(Placement).all()
+    return db.query(Placement).filter(Placement.id_utilisateur == user.id).all()
 
 
 @router.post("/api/v1/investissements", response_model=PlacementRead, status_code=201, summary="Déclarer un placement")
@@ -92,6 +97,7 @@ def creer_placement(
         valeur_actuelle=valeur_actuelle,
         date_investissement=date_investissement_dt or datetime.now(timezone.utc),
         description=description,
+        id_utilisateur=user.id,
     )
     db.add(placement)
     db.commit()
@@ -114,7 +120,7 @@ def modifier_placement(
     user=Depends(get_current_user),
 ):
     placement = db.get(Placement, placement_id)
-    if not placement:
+    if not placement or placement.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Placement introuvable")
     if nom_support is not None:
         placement.nom_support = nom_support
@@ -130,7 +136,7 @@ def modifier_placement(
 @router.put("/api/v1/investissements/{placement_id}/value", response_model=PlacementRead, summary="Mettre à jour la valeur liquidative")
 def update_valeur(placement_id: int, valeur_actuelle: float = Form(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
-    if not placement:
+    if not placement or placement.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Placement introuvable")
     if valeur_actuelle < 0:
         raise HTTPException(status_code=400, detail="La valeur ne peut pas être négative.")
@@ -151,7 +157,7 @@ def update_valeur(placement_id: int, valeur_actuelle: float = Form(...), db: Ses
 @router.put("/api/v1/investissements/{placement_id}/versement", response_model=PlacementRead, summary="Ajouter un versement complémentaire")
 def ajouter_versement(placement_id: int, montant: float = Form(...), db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
-    if not placement:
+    if not placement or placement.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Placement introuvable")
     if montant <= 0:
         raise HTTPException(status_code=400, detail="Le montant du versement doit être strictement positif.")
@@ -167,7 +173,7 @@ def ajouter_versement(placement_id: int, montant: float = Form(...), db: Session
 @router.delete("/api/v1/investissements/{placement_id}", status_code=204, summary="Supprimer un placement")
 def supprimer_placement(placement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     placement = db.get(Placement, placement_id)
-    if not placement:
+    if not placement or placement.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Placement introuvable")
     db.query(HistoriqueInvestissement).filter(HistoriqueInvestissement.id_placement == placement_id).delete()
     db.delete(placement)

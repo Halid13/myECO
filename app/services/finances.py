@@ -3,6 +3,7 @@ from datetime import date
 from collections import defaultdict
 from sqlalchemy.orm import Session
 from app.models.mouvement import Mouvement, TypeMouvement
+from app.models.compte import Compte
 
 # Palette de couleurs partagée pour tous les graphiques Chart.js du projet
 # (donuts de répartition : abonnements par catégorie, épargne par projet, etc.)
@@ -25,12 +26,17 @@ def mois_precedent(annee: int, mois: int) -> tuple[int, int]:
     return annee, mois - 1
 
 
-def calculer_mouvements_mois(db: Session, type_mouvement: TypeMouvement, today: date | None = None) -> dict:
+def calculer_mouvements_mois(db: Session, type_mouvement: TypeMouvement, id_utilisateur: int, today: date | None = None) -> dict:
     """Somme des mouvements d'un type donné (Entrée/Sortie), ce mois et le mois précédent,
-    tous comptes confondus."""
+    tous comptes de l'utilisateur confondus."""
     today = today or date.today()
     annee_prec, mois_prec = mois_precedent(today.year, today.month)
-    mouvements = db.query(Mouvement).filter(Mouvement.type == type_mouvement).all()
+    mouvements = (
+        db.query(Mouvement)
+        .join(Compte)
+        .filter(Mouvement.type == type_mouvement, Compte.id_utilisateur == id_utilisateur)
+        .all()
+    )
     mois = sum(
         m.montant for m in mouvements
         if m.date_mouvement.year == today.year and m.date_mouvement.month == today.month
@@ -42,9 +48,9 @@ def calculer_mouvements_mois(db: Session, type_mouvement: TypeMouvement, today: 
     return {"mois": round(mois, 2), "mois_precedent": round(mois_precedent_total, 2)}
 
 
-def calculer_revenus_mois(db: Session, today: date | None = None) -> float:
-    """Somme des mouvements de type Entrée du mois en cours, tous comptes confondus."""
-    return calculer_mouvements_mois(db, TypeMouvement.entree, today)["mois"]
+def calculer_revenus_mois(db: Session, id_utilisateur: int, today: date | None = None) -> float:
+    """Somme des mouvements de type Entrée du mois en cours, tous comptes de l'utilisateur confondus."""
+    return calculer_mouvements_mois(db, TypeMouvement.entree, id_utilisateur, today)["mois"]
 
 
 # Coefficients de conversion vers un équivalent mensuel, par fréquence d'abonnement

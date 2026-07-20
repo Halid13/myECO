@@ -30,12 +30,28 @@ def _statut_reste_a_vivre(montant: float) -> dict:
 templates = Jinja2Templates(directory="app/templates")
 
 
-def _build_dashboard_context(db: Session) -> dict:
-    comptes = db.query(Compte).all()
-    abonnements = db.query(Abonnement).filter(Abonnement.actif == True).all()
-    objectifs = db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
-    placements = db.query(Placement).all()
-    mouvements = db.query(Mouvement).order_by(Mouvement.date_mouvement.desc()).limit(20).all()
+def _build_dashboard_context(db: Session, id_utilisateur: int) -> dict:
+    comptes = db.query(Compte).filter(Compte.id_utilisateur == id_utilisateur).all()
+    abonnements = (
+        db.query(Abonnement)
+        .join(Compte)
+        .filter(Abonnement.actif == True, Compte.id_utilisateur == id_utilisateur)
+        .all()
+    )
+    objectifs = (
+        db.query(ObjectifEpargne)
+        .filter(ObjectifEpargne.actif == True, ObjectifEpargne.id_utilisateur == id_utilisateur)
+        .all()
+    )
+    placements = db.query(Placement).filter(Placement.id_utilisateur == id_utilisateur).all()
+    mouvements = (
+        db.query(Mouvement)
+        .join(Compte)
+        .filter(Compte.id_utilisateur == id_utilisateur)
+        .order_by(Mouvement.date_mouvement.desc())
+        .limit(20)
+        .all()
+    )
 
     total_liquidites = sum(c.solde for c in comptes)
     total_epargne = sum(o.montant_actuel for o in objectifs)
@@ -44,9 +60,9 @@ def _build_dashboard_context(db: Session) -> dict:
 
     charges_mensuelles = calculer_charges_mensuelles(abonnements)
 
-    # Revenus du mois courant (mouvements de type "Entrée" du mois, tous comptes)
+    # Revenus du mois courant (mouvements de type "Entrée" du mois, tous comptes de l'utilisateur)
     today = date.today()
-    revenus_mois = calculer_revenus_mois(db, today)
+    revenus_mois = calculer_revenus_mois(db, id_utilisateur, today)
 
     # Reste à vivre = Revenus - Dépenses fixes
     reste_a_vivre = revenus_mois - charges_mensuelles
@@ -81,15 +97,16 @@ def _build_dashboard_context(db: Session) -> dict:
 
 @router.get("/", summary="Page principale — Dashboard")
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    if not utilisateur_connecte(request, db):
+    user = utilisateur_connecte(request, db)
+    if not user:
         return RedirectResponse("/login")
-    if db.query(Compte).count() == 0:
+    if db.query(Compte).filter(Compte.id_utilisateur == user.id).count() == 0:
         return RedirectResponse("/onboarding")
-    context = _build_dashboard_context(db)
+    context = _build_dashboard_context(db, user.id)
     context["request"] = request
     return templates.TemplateResponse("index.html", context)
 
 
 @router.get("/api/v1/dashboard", summary="Données consolidées du dashboard (JSON)")
 def get_dashboard_data(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return _build_dashboard_context(db)
+    return _build_dashboard_context(db, user.id)

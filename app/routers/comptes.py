@@ -21,10 +21,11 @@ PAGE_SIZE = 6
 
 @router.get("/comptes/", summary="Page Mouvements & Comptes")
 def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, db: Session = Depends(get_db)):
-    if not utilisateur_connecte(request, db):
+    user = utilisateur_connecte(request, db)
+    if not user:
         return RedirectResponse("/login")
-    comptes = db.query(Compte).all()
-    q = db.query(Mouvement)
+    comptes = db.query(Compte).filter(Compte.id_utilisateur == user.id).all()
+    q = db.query(Mouvement).join(Compte).filter(Compte.id_utilisateur == user.id)
     if compte_id:
         q = q.filter(Mouvement.id_compte == compte_id)
     q = q.order_by(Mouvement.date_mouvement.desc())
@@ -36,7 +37,9 @@ def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, 
 
     total_liquidites = sum(c.solde for c in comptes)
     objectifs_epargne = (
-        db.query(ObjectifEpargne).filter(ObjectifEpargne.actif == True).all()
+        db.query(ObjectifEpargne)
+        .filter(ObjectifEpargne.actif == True, ObjectifEpargne.id_utilisateur == user.id)
+        .all()
     )
     return templates.TemplateResponse("mouvements.html", {
         "request": request,
@@ -46,7 +49,7 @@ def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, 
         "nb_pages": nb_pages,
         "total_liquidites": round(total_liquidites, 2),
         "filtre_compte_id": compte_id,
-        "revenus_mois": round(calculer_revenus_mois(db, date.today()), 2),
+        "revenus_mois": round(calculer_revenus_mois(db, user.id, date.today()), 2),
         "objectifs_epargne": objectifs_epargne,
     })
 
@@ -55,7 +58,7 @@ def page_comptes(request: Request, compte_id: int | None = None, page: int = 1, 
 
 @router.get("/api/v1/comptes", response_model=list[CompteRead], summary="Lister les comptes")
 def lister_comptes(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return db.query(Compte).all()
+    return db.query(Compte).filter(Compte.id_utilisateur == user.id).all()
 
 
 @router.post("/api/v1/comptes", response_model=CompteRead, status_code=201, summary="Créer un compte")
@@ -65,7 +68,7 @@ def creer_compte(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    compte = Compte(nom_banque=nom_banque, solde=solde, date_maj=datetime.now(timezone.utc))
+    compte = Compte(nom_banque=nom_banque, solde=solde, date_maj=datetime.now(timezone.utc), id_utilisateur=user.id)
     db.add(compte)
     db.commit()
     db.refresh(compte)
@@ -80,7 +83,7 @@ def ajuster_solde(
     user=Depends(get_current_user),
 ):
     compte = db.get(Compte, compte_id)
-    if not compte:
+    if not compte or compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Compte introuvable")
     compte.solde = solde
     compte.date_maj = datetime.now(timezone.utc)
@@ -98,7 +101,7 @@ def modifier_compte(
     user=Depends(get_current_user),
 ):
     compte = db.get(Compte, compte_id)
-    if not compte:
+    if not compte or compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Compte introuvable")
     if nom_banque is not None:
         compte.nom_banque = nom_banque
@@ -113,7 +116,7 @@ def modifier_compte(
 @router.delete("/api/v1/comptes/{compte_id}", status_code=204, summary="Supprimer un compte")
 def supprimer_compte(compte_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     compte = db.get(Compte, compte_id)
-    if not compte:
+    if not compte or compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Compte introuvable")
     # Pas de cascade FK configurée côté DB : on supprime explicitement
     # les mouvements et abonnements liés pour éviter les lignes orphelines.
@@ -127,7 +130,7 @@ def supprimer_compte(compte_id: int, db: Session = Depends(get_db), user=Depends
 
 @router.get("/api/v1/mouvements", response_model=list[MouvementRead], summary="Lister les mouvements")
 def lister_mouvements(compte_id: int | None = None, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    q = db.query(Mouvement)
+    q = db.query(Mouvement).join(Compte).filter(Compte.id_utilisateur == user.id)
     if compte_id:
         q = q.filter(Mouvement.id_compte == compte_id)
     return q.order_by(Mouvement.date_mouvement.desc()).all()
@@ -144,11 +147,11 @@ def creer_mouvement(
     user=Depends(get_current_user),
 ):
     from app.models.mouvement import TypeMouvement
-    
+
     compte = db.get(Compte, id_compte)
-    if not compte:
+    if not compte or compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Compte introuvable")
-    
+
     # Convertir string en Enum
     type_enum = TypeMouvement(type)
     
@@ -176,7 +179,7 @@ def creer_mouvement(
 @router.delete("/api/v1/mouvements/{mouvement_id}", status_code=204, summary="Supprimer un mouvement")
 def supprimer_mouvement(mouvement_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     mouvement = db.get(Mouvement, mouvement_id)
-    if not mouvement:
+    if not mouvement or mouvement.compte.id_utilisateur != user.id:
         raise HTTPException(status_code=404, detail="Mouvement introuvable")
     db.delete(mouvement)
     db.commit()

@@ -100,16 +100,21 @@ def executer_prelevements():
         }
 
 
-def obtenir_prochains_prelevements(nb_jours: int = 30) -> dict:
+def obtenir_prochains_prelevements(id_utilisateur: int, nb_jours: int = 30) -> dict:
     """
-    Retourne les prochains prélèvements à venir dans les N prochains jours.
+    Retourne les prochains prélèvements à venir dans les N prochains jours, pour cet utilisateur.
     Utile pour afficher une prévision.
     """
     db = SessionLocal()
     today = date.today()
-    
+
     try:
-        abonnements = db.query(Abonnement).filter(Abonnement.actif == True).all()
+        abonnements = (
+            db.query(Abonnement)
+            .join(Compte)
+            .filter(Abonnement.actif == True, Compte.id_utilisateur == id_utilisateur)
+            .all()
+        )
         prochains = []
         
         for abo in abonnements:

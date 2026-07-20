@@ -7,12 +7,18 @@ from app.models.epargne import ObjectifEpargne, HistoriqueEpargne
 from app.services.finances import mois_precedent, evolution_cumulee
 
 
-def effort_epargne_mois(db: Session, today: date | None = None) -> dict:
-    """Total épargné (dépôts positifs) ce mois-ci et le mois précédent, tous objectifs confondus."""
+def effort_epargne_mois(db: Session, id_utilisateur: int, today: date | None = None) -> dict:
+    """Total épargné (dépôts positifs) ce mois-ci et le mois précédent, tous objectifs
+    de l'utilisateur confondus."""
     today = today or date.today()
     annee_prec, mois_prec = mois_precedent(today.year, today.month)
 
-    depots = db.query(HistoriqueEpargne).filter(HistoriqueEpargne.montant > 0).all()
+    depots = (
+        db.query(HistoriqueEpargne)
+        .join(ObjectifEpargne)
+        .filter(HistoriqueEpargne.montant > 0, ObjectifEpargne.id_utilisateur == id_utilisateur)
+        .all()
+    )
 
     effort_mois = sum(
         m.montant for m in depots
@@ -61,9 +67,15 @@ def estimation_mois_restants(objectif: ObjectifEpargne) -> int | None:
     return math.ceil(reste / rythme_moyen)
 
 
-def evolution_epargne(db: Session, nb_mois: int = 6, today: date | None = None) -> list[dict]:
+def evolution_epargne(db: Session, id_utilisateur: int, nb_mois: int = 6, today: date | None = None) -> list[dict]:
     """Montant total épargné (cumulé, net) à la fin de chaque mois, sur les N derniers mois —
-    approxime la trajectoire de croissance de l'épargne totale."""
+    approxime la trajectoire de croissance de l'épargne totale de l'utilisateur."""
     today = today or date.today()
-    mouvements = db.query(HistoriqueEpargne).order_by(HistoriqueEpargne.date_operation).all()
+    mouvements = (
+        db.query(HistoriqueEpargne)
+        .join(ObjectifEpargne)
+        .filter(ObjectifEpargne.id_utilisateur == id_utilisateur)
+        .order_by(HistoriqueEpargne.date_operation)
+        .all()
+    )
     return evolution_cumulee(mouvements, nb_mois, today)
