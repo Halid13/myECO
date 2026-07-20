@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=myeco
 WorkingDirectory=/home/myeco/myECO
-Environment="SECRET_KEY=change-moi-en-production"
+Environment="SECRET_KEY=861063707416c7974cfe76e59dc0bb68a33bc2d417b824bc3e1262ffd120f003"
 ExecStart=/home/myeco/myECO/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=5
