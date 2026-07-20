@@ -102,12 +102,12 @@
                 </button>
 
                 <!-- Bouton Déconnexion -->
-                <a href="/logout" title="Déconnexion"
+                <button type="button" onclick="demanderDeconnexion()" title="Déconnexion"
                    class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
                           bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
                           shadow-inner hover:text-red-400 hover:border-red-600/50 transition-all duration-300">
                     {{ icons.icon("arrow-right", "18") }}
-                </a>
+                </button>
             </div>
 
         </nav>
@@ -259,6 +259,17 @@
             _confirmModalRepondre(false);
         }
     });
+
+    async function demanderDeconnexion() {
+        const ok = await confirmerAction({
+            titre: 'Déconnexion',
+            message: 'Voulez-vous vraiment vous déconnecter ?',
+            labelConfirmer: 'Se déconnecter',
+        });
+        if (ok) {
+            window.location.href = '/logout';
+        }
+    }
     </script>
 
     <!-- ==================== MODAL PARTAGÉE : CONFIRMATION ==================== -->
