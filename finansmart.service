@@ -1,0 +1,15 @@
+[Unit]
+Description=FinanSmart (myECO) - Application de gestion financière
+After=network.target
+
+[Service]
+Type=simple
+User=myeco
+WorkingDirectory=/home/myeco/myECO
+Environment="SECRET_KEY=change-moi-en-production"
+ExecStart=/home/myeco/myECO/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
