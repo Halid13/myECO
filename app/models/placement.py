@@ -15,6 +15,7 @@ class Placement(Base):
     date_valorisation = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     date_investissement = Column(DateTime, nullable=True, default=lambda: datetime.now(timezone.utc))
     description = Column(String, nullable=True)
+    id_utilisateur = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
 
     historique = relationship("HistoriqueInvestissement", back_populates="placement")
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime, timezone
 from app.database import Base
 
@@ -12,6 +12,7 @@ class Recommandation(Base):
     __tablename__ = "recommandation"
 
     id = Column(Integer, primary_key=True, index=True)
+    id_utilisateur = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
     type_regle = Column(String, nullable=False)       # ex: "charges_fixes_elevees"
     cle_contexte = Column(String, nullable=False)      # dédup : "global", "compte:3", "objectif:5"...
     niveau = Column(String, nullable=False)            # "info" | "warning" | "success"

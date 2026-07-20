@@ -14,6 +14,7 @@ class ObjectifEpargne(Base):
     date_limite = Column(DateTime, nullable=True)
     actif = Column(Boolean, default=True)
     id_compte = Column(Integer, ForeignKey("compte.id"), nullable=True)
+    id_utilisateur = Column(Integer, ForeignKey("utilisateur.id"), nullable=True)
 
     historique = relationship("HistoriqueEpargne", back_populates="objectif")
     compte = relationship("Compte")

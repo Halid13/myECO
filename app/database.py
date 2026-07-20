@@ -35,11 +35,17 @@ def _appliquer_migrations_legeres():
     donc l'ajout d'une colonne à un modèle existant ne se propage pas seul à la DB."""
     inspector = inspect(engine)
     colonnes_attendues = {
-        "objectif_epargne": [("id_compte", "INTEGER REFERENCES compte(id)")],
+        "objectif_epargne": [
+            ("id_compte", "INTEGER REFERENCES compte(id)"),
+            ("id_utilisateur", "INTEGER REFERENCES utilisateur(id)"),
+        ],
         "placement": [
             ("date_investissement", "DATETIME"),
             ("description", "TEXT"),
+            ("id_utilisateur", "INTEGER REFERENCES utilisateur(id)"),
         ],
+        "compte": [("id_utilisateur", "INTEGER REFERENCES utilisateur(id)")],
+        "recommandation": [("id_utilisateur", "INTEGER REFERENCES utilisateur(id)")],
     }
     with engine.begin() as conn:
         for table, colonnes in colonnes_attendues.items():
