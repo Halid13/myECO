@@ -38,7 +38,8 @@
 
 <!-- ==================== LISTE DES UTILISATEURS ==================== -->
 <div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
-    <table class="w-full text-xs">
+    <div class="overflow-x-auto">
+    <table class="w-full text-xs min-w-[420px]">
         <thead>
             <tr class="border-b border-gray-800 bg-gray-950/50">
                 <th class="text-left py-2 px-3 text-gray-500 font-medium">Identifiant</th>
@@ -85,6 +86,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 
 <!-- ==================== MODAL : RENOMMER ==================== -->

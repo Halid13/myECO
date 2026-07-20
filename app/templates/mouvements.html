@@ -148,7 +148,8 @@
         <!-- Tableau des mouvements -->
         <div id="liste-mouvements" class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
             {% if mouvements %}
-            <table class="w-full text-xs">
+            <div class="overflow-x-auto">
+            <table class="w-full text-xs min-w-[480px]">
                 <thead>
                     <tr class="border-b border-gray-800 bg-gray-950/50">
                         <th class="text-left py-2 px-3 text-gray-500 font-medium">Date</th>
@@ -189,6 +190,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
             <!-- Pagination -->
             {% if nb_pages > 1 %}
             {% set base_qs = '?compte_id=' ~ filtre_compte_id ~ '&' if filtre_compte_id else '?' %}

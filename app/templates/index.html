@@ -36,7 +36,7 @@
     <!-- Résumé mensuel (3 KPI) -->
     <div class="lg:col-span-2">
         {% call components.section_card("Résumé mensuel", "chart-bar", full_height=True) %}
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {{ components.kpi_mini("Revenus", revenus_mois, "€", "banknotes", "emerald") }}
             {{ components.kpi_mini("Dépenses fixes", charges_mensuelles, "€", "minus-circle", "red", "toggleModal('modal-depenses-fixes')") }}
             {{ components.kpi_status("Reste à vivre", statut_reste_a_vivre, "shield-check") }}

@@ -51,73 +51,132 @@
 
     <!-- ==================== BARRE DE NAVIGATION FLOTTANTE (haut) ==================== -->
     <div class="fixed top-4 inset-x-0 z-40 px-4">
-        <nav class="max-w-[57.6rem] mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-full shadow-lg px-2.5 py-2">
+        <nav class="max-w-[57.6rem] mx-auto bg-gray-950/70 backdrop-blur-xl border border-gray-800/60 rounded-[1.75rem] sm:rounded-full shadow-lg px-2.5 py-2">
 
-            <a href="/" class="flex items-center gap-2 justify-self-start flex-shrink-0 group">
-                <span class="text-lg leading-none">💰</span>
-                <span class="hidden sm:inline text-white font-bold text-[15px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
-            </a>
+            <!-- Ligne principale : logo + (desktop: nav + actions) + (mobile: bouton hamburger) -->
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
 
-            <div class="flex items-center gap-1 justify-self-center">
+                <a href="/" class="flex items-center gap-2 justify-self-start flex-shrink-0 group">
+                    <span class="text-lg leading-none">💰</span>
+                    <span class="hidden sm:inline text-white font-bold text-[15px] tracking-tight group-hover:text-emerald-400 transition">FinanSmart</span>
+                </a>
+
+                <!-- Navigation principale : visible seulement à partir de sm -->
+                <div class="hidden sm:flex items-center gap-1 justify-self-center">
+                    {% for href, icon_name, label in nav_items %}
+                    {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
+                    <a href="{{ href }}"
+                       class="flex items-center gap-2 px-[13px] py-[8px] rounded-full text-[15px] font-medium transition whitespace-nowrap
+                              {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
+                        {{ icons.icon(icon_name, "20") }}
+                        <span class="hidden sm:inline">{{ label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Actions desktop : cachées sur mobile -->
+                <div class="hidden sm:flex items-center gap-1.5 justify-self-end flex-shrink-0">
+                    <!-- Bouton Notifications -->
+                    <div class="relative flex-shrink-0">
+                        <button id="toggle-notifications"
+                                onclick="toggleNotifications(event)"
+                                title="Conseils & alertes"
+                                class="relative flex items-center justify-center w-10 h-10 rounded-full
+                                       bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                                       shadow-inner hover:text-gray-200 hover:border-gray-600 transition-all duration-300">
+                            {{ icons.icon("bell", "18") }}
+                            <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-gray-950"></span>
+                        </button>
+
+                        <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-gray-950/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl p-3">
+                            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
+                            <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bouton Mode discrétion -->
+                    <button id="toggle-discretion"
+                            onclick="toggleDiscretion()"
+                            title="Mode discrétion"
+                            class="relative flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
+                                   bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                                   shadow-inner hover:text-emerald-400 hover:border-emerald-600/50 hover:from-gray-800 hover:to-gray-800
+                                   transition-all duration-300">
+                        <span id="icone-discretion-off">{{ icons.icon("eye", "18") }}</span>
+                        <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
+                    </button>
+
+                    <!-- Bouton Administration (visible uniquement pour l'admin) -->
+                    {% if request.session.get("identifiant") == "admin" %}
+                    <a href="/admin" title="Administration"
+                       class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
+                              bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                              shadow-inner hover:text-blue-400 hover:border-blue-600/50 transition-all duration-300">
+                        {{ icons.icon("adjustments", "18") }}
+                    </a>
+                    {% endif %}
+
+                    <!-- Bouton Déconnexion -->
+                    <button type="button" onclick="demanderDeconnexion()" title="Déconnexion"
+                       class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
+                              bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                              shadow-inner hover:text-red-400 hover:border-red-600/50 transition-all duration-300">
+                        {{ icons.icon("arrow-right", "18") }}
+                    </button>
+                </div>
+
+                <!-- Bouton menu (hamburger) : visible seulement en dessous de sm -->
+                <button id="toggle-menu-mobile" onclick="toggleMenuMobile()" title="Menu"
+                        class="sm:hidden flex items-center justify-center w-10 h-10 rounded-full justify-self-end flex-shrink-0
+                               bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
+                               shadow-inner transition-all duration-300">
+                    <span id="icone-menu-ferme">{{ icons.icon("list", "20") }}</span>
+                    <span id="icone-menu-ouvert" class="hidden">{{ icons.icon("x-circle", "20") }}</span>
+                </button>
+            </div>
+
+            <!-- Panneau mobile déroulant : navigation + actions, empilés -->
+            <div id="menu-mobile" class="hidden sm:hidden mt-2 pt-2 border-t border-gray-800/60 space-y-1">
                 {% for href, icon_name, label in nav_items %}
                 {% set is_active = (href == "/" and request.url.path == "/") or (href != "/" and request.url.path.startswith(href)) %}
                 <a href="{{ href }}"
-                   class="flex items-center gap-2 px-[13px] py-[8px] rounded-full text-[15px] font-medium transition whitespace-nowrap
-                          {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-500 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
-                    {{ icons.icon(icon_name, "20") }}
-                    <span class="hidden sm:inline">{{ label }}</span>
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition
+                          {% if is_active %}bg-emerald-500/15 text-emerald-400{% else %}text-gray-400 hover:text-gray-200 hover:bg-gray-900/60{% endif %}">
+                    {{ icons.icon(icon_name, "18") }} {{ label }}
                 </a>
                 {% endfor %}
-            </div>
 
-            <div class="flex items-center gap-1.5 justify-self-end flex-shrink-0">
-                <!-- Bouton Notifications -->
-                <div class="relative flex-shrink-0">
-                    <button id="toggle-notifications"
-                            onclick="toggleNotifications(event)"
-                            title="Conseils & alertes"
-                            class="relative flex items-center justify-center w-10 h-10 rounded-full
-                                   bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                                   shadow-inner hover:text-gray-200 hover:border-gray-600 transition-all duration-300">
-                        {{ icons.icon("bell", "18") }}
-                        <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-gray-950"></span>
+                <div class="pt-1 mt-1 border-t border-gray-800/60 grid grid-cols-2 gap-1">
+                    <button type="button" onclick="toggleNotifications(event)"
+                            class="relative flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-900/60 transition">
+                        {{ icons.icon("bell", "18") }} Alertes
+                        <span id="notif-badge-mobile" class="hidden absolute top-1.5 left-6 min-w-[15px] h-[15px] px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none"></span>
                     </button>
 
-                    <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-gray-950/95 backdrop-blur-xl border border-gray-800 rounded-lg shadow-2xl p-3">
-                        <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
-                        <div id="notif-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
-                    </div>
+                    <button type="button" onclick="toggleDiscretion()"
+                            class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-900/60 transition">
+                        <span id="icone-discretion-off-mobile">{{ icons.icon("eye", "18") }}</span>
+                        <span id="icone-discretion-on-mobile" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
+                        Discrétion
+                    </button>
+
+                    {% if request.session.get("identifiant") == "admin" %}
+                    <a href="/admin"
+                       class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-blue-400 hover:bg-gray-900/60 transition">
+                        {{ icons.icon("adjustments", "18") }} Admin
+                    </a>
+                    {% endif %}
+
+                    <button type="button" onclick="demanderDeconnexion()"
+                            class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-900/60 transition">
+                        {{ icons.icon("arrow-right", "18") }} Déconnexion
+                    </button>
                 </div>
 
-                <!-- Bouton Mode discrétion -->
-                <button id="toggle-discretion"
-                        onclick="toggleDiscretion()"
-                        title="Mode discrétion"
-                        class="relative flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
-                               bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                               shadow-inner hover:text-emerald-400 hover:border-emerald-600/50 hover:from-gray-800 hover:to-gray-800
-                               transition-all duration-300">
-                    <span id="icone-discretion-off">{{ icons.icon("eye", "18") }}</span>
-                    <span id="icone-discretion-on" class="hidden">{{ icons.icon("eye-slash", "18") }}</span>
-                </button>
-
-                <!-- Bouton Administration (visible uniquement pour l'admin) -->
-                {% if request.session.get("identifiant") == "admin" %}
-                <a href="/admin" title="Administration"
-                   class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
-                          bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                          shadow-inner hover:text-blue-400 hover:border-blue-600/50 transition-all duration-300">
-                    {{ icons.icon("adjustments", "18") }}
-                </a>
-                {% endif %}
-
-                <!-- Bouton Déconnexion -->
-                <button type="button" onclick="demanderDeconnexion()" title="Déconnexion"
-                   class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0
-                          bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/70 text-gray-400
-                          shadow-inner hover:text-red-400 hover:border-red-600/50 transition-all duration-300">
-                    {{ icons.icon("arrow-right", "18") }}
-                </button>
+                <div id="notif-panel-mobile" class="hidden pt-2 mt-1 border-t border-gray-800/60">
+                    <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Conseils & alertes</p>
+                    <div id="notif-list-mobile" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                </div>
             </div>
 
         </nav>
@@ -145,13 +204,16 @@
             el.classList.toggle('select-none', isDiscret);
         });
 
+        ['', '-mobile'].forEach(suffixe => {
+            const iconOff = document.getElementById('icone-discretion-off' + suffixe);
+            const iconOn = document.getElementById('icone-discretion-on' + suffixe);
+            if (iconOff && iconOn) {
+                iconOff.classList.toggle('hidden', isDiscret);
+                iconOn.classList.toggle('hidden', !isDiscret);
+            }
+        });
+
         const btn = document.getElementById('toggle-discretion');
-        const iconOff = document.getElementById('icone-discretion-off');
-        const iconOn = document.getElementById('icone-discretion-on');
-        if (iconOff && iconOn) {
-            iconOff.classList.toggle('hidden', isDiscret);
-            iconOn.classList.toggle('hidden', !isDiscret);
-        }
         if (btn) {
             btn.classList.toggle('text-emerald-400', isDiscret);
             btn.classList.toggle('border-emerald-500/60', isDiscret);
@@ -180,49 +242,54 @@
         info: 'bg-blue-950/30 border-blue-800/60 text-blue-300',
     };
 
-    async function chargerAlertes() {
-        const badge = document.getElementById('notif-badge');
-        const list = document.getElementById('notif-list');
-        if (!badge || !list) return;
+    function construireLigneAlerte(a) {
+        const row = document.createElement('div');
+        row.className = `notif-item flex items-start gap-2 p-2.5 rounded-lg border text-xs leading-relaxed ${NOTIF_STYLES[a.niveau] || NOTIF_STYLES.info}`;
 
+        const msg = document.createElement('span');
+        msg.className = 'flex-1';
+        msg.textContent = a.message;
+        row.appendChild(msg);
+
+        if (a.lien) {
+            const link = document.createElement('a');
+            link.href = a.lien;
+            link.className = 'underline opacity-70 hover:opacity-100 whitespace-nowrap flex-shrink-0 font-medium';
+            link.textContent = 'Voir →';
+            row.appendChild(link);
+        }
+        return row;
+    }
+
+    async function chargerAlertes() {
         try {
             const res = await fetch('/api/v1/assistant/alerts');
             const data = await res.json();
             const alertes = data.alertes || [];
 
-            if (alertes.length > 0) {
-                badge.textContent = alertes.length > 9 ? '9+' : String(alertes.length);
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            list.innerHTML = '';
-            if (alertes.length === 0) {
-                const empty = document.createElement('p');
-                empty.className = 'text-xs text-gray-600 px-1 py-2';
-                empty.textContent = 'Aucune alerte pour le moment.';
-                list.appendChild(empty);
-                return;
-            }
-
-            alertes.forEach(a => {
-                const row = document.createElement('div');
-                row.className = `notif-item flex items-start gap-2 p-2.5 rounded-lg border text-xs leading-relaxed ${NOTIF_STYLES[a.niveau] || NOTIF_STYLES.info}`;
-
-                const msg = document.createElement('span');
-                msg.className = 'flex-1';
-                msg.textContent = a.message;
-                row.appendChild(msg);
-
-                if (a.lien) {
-                    const link = document.createElement('a');
-                    link.href = a.lien;
-                    link.className = 'underline opacity-70 hover:opacity-100 whitespace-nowrap flex-shrink-0 font-medium';
-                    link.textContent = 'Voir →';
-                    row.appendChild(link);
+            ['notif-badge', 'notif-badge-mobile'].forEach(id => {
+                const badge = document.getElementById(id);
+                if (!badge) return;
+                if (alertes.length > 0) {
+                    badge.textContent = alertes.length > 9 ? '9+' : String(alertes.length);
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
                 }
-                list.appendChild(row);
+            });
+
+            ['notif-list', 'notif-list-mobile'].forEach(id => {
+                const list = document.getElementById(id);
+                if (!list) return;
+                list.innerHTML = '';
+                if (alertes.length === 0) {
+                    const empty = document.createElement('p');
+                    empty.className = 'text-xs text-gray-600 px-1 py-2';
+                    empty.textContent = 'Aucune alerte pour le moment.';
+                    list.appendChild(empty);
+                    return;
+                }
+                alertes.forEach(a => list.appendChild(construireLigneAlerte(a)));
             });
         } catch (e) {
             console.error('Erreur chargement alertes:', e);
@@ -232,6 +299,18 @@
     function toggleNotifications(event) {
         event.stopPropagation();
         document.getElementById('notif-panel')?.classList.toggle('hidden');
+        document.getElementById('notif-panel-mobile')?.classList.toggle('hidden');
+    }
+
+    function toggleMenuMobile() {
+        const menu = document.getElementById('menu-mobile');
+        const estOuvert = !menu.classList.contains('hidden');
+        menu.classList.toggle('hidden');
+        document.getElementById('icone-menu-ferme').classList.toggle('hidden', !estOuvert);
+        document.getElementById('icone-menu-ouvert').classList.toggle('hidden', estOuvert);
+        if (estOuvert) {
+            document.getElementById('notif-panel-mobile')?.classList.add('hidden');
+        }
     }
 
     document.addEventListener('click', (e) => {
